@@ -34,4 +34,10 @@ export class CreateProdutoDto {
     example: 1 
   })
   categoriaId: number;
+
+  @ApiProperty({
+    description: 'ativo- true para ativo, false para inativo',
+    example: true
+  })
+  ativo: number;
 }

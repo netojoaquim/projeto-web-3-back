@@ -16,6 +16,9 @@ export class CarrinhoItem {
   @ManyToOne(() => Carrinho, carrinho => carrinho.itens, { nullable: false, onDelete: 'CASCADE' })
   carrinho: Carrinho;
 
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    data_criacao: Date;
+
   @ManyToOne(() => Produto, { nullable: false })
   @JoinColumn()
   produto: Produto;

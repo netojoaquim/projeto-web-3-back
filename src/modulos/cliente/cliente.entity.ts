@@ -8,10 +8,10 @@ export class Cliente {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ nullable: false ,unique: true})
+    @Column({ nullable: false})
     nome_completo: string;
 
-    @Column({ nullable: false })
+    @Column({ nullable: false, unique: true })
     email: string;
 
     @Column({ nullable: false })

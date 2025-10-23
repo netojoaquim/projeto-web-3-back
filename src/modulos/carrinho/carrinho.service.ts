@@ -6,6 +6,7 @@ import { CarrinhoItem } from './carrinho-item.entity';
 import { Produto } from '../produto/produto.entity';
 import { Cliente } from '../cliente/cliente.entity';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { escape } from 'querystring';
 
 @Injectable()
 export class CarrinhoService {
@@ -29,7 +30,8 @@ export class CarrinhoService {
     if (!carrinho) {
       const cliente = await this.clienteRepository.findOneBy({ id: clienteId });
       if (!cliente) throw new NotFoundException('Cliente não encontrado');
-      carrinho = this.carrinhoRepository.create({ cliente, itens: [] });
+
+      carrinho = this.carrinhoRepository.create({ cliente, itens: [], total: 0 });
       await this.carrinhoRepository.save(carrinho);
     }
     return carrinho;
@@ -38,22 +40,54 @@ export class CarrinhoService {
   // Adiciona um produto ao carrinho
   async adicionarItem(clienteId: number, produtoId: number, quantidade: number) {
     if (quantidade <= 0) throw new BadRequestException('Quantidade deve ser maior que zero');
+    
 
     const carrinho = await this.getCarrinhoByCliente(clienteId);
     const produto = await this.produtoRepository.findOneBy({ id: produtoId });
+
     if (!produto) throw new NotFoundException('Produto não encontrado');
+
+    if (!produto.ativo) {
+      throw new BadRequestException(`O produto "${produto.nome}" está inativo e não pode ser adicionado ao carrinho.`);
+    }
+
+    if (!produto.estoque) {
+      throw new BadRequestException(`O produto "${produto.nome}" está sem estoque e não pode ser adicionado ao carrinho.`);
+    }
 
     // Verifica se o item já existe
     let item = carrinho.itens.find(i => i.produto.id === produtoId);
+
     if (item) {
-      item.quantidade += quantidade; // soma a quantidade
+      const novaquantidade= item.quantidade + quantidade;
+
+      if (quantidade > produto.estoque) {
+      throw new BadRequestException(
+        `Estoque insuficiente. Estoque disponível: ${produto.estoque}, quantidade solicitada: ${quantidade}`,
+      );
+    }
+      item.quantidade = novaquantidade;
+
     } else {
-      item = this.itemRepository.create({ carrinho, produto, quantidade, valor: produto.preco });
+
+      if (quantidade > produto.estoque) {
+      throw new BadRequestException(
+        `Estoque insuficiente. Estoque disponível: ${produto.estoque}, quantidade solicitada: ${quantidade}`,
+      );
+    }
+
+      item = this.itemRepository.create({ carrinho,
+         produto, 
+         quantidade,
+          valor: produto.preco 
+        });
       carrinho.itens.push(item);
     }
 
     await this.itemRepository.save(item);
-    return carrinho;
+    await this.recalcularTotal(carrinho.id);
+
+    return this.getCarrinhoByCliente(clienteId);
   }
 
   // Atualiza a quantidade de um item
@@ -71,6 +105,7 @@ export class CarrinhoService {
       item.quantidade = quantidade;
       await this.itemRepository.save(item);
     }
+    await this.recalcularTotal(carrinho.id);
     return this.getCarrinhoByCliente(clienteId);
   }
 
@@ -81,6 +116,7 @@ export class CarrinhoService {
     if (!item) throw new NotFoundException('Item não encontrado no carrinho');
 
     await this.itemRepository.delete(item.id);
+    await this.recalcularTotal(carrinho.id);
     return this.getCarrinhoByCliente(clienteId);
   }
 
@@ -88,13 +124,34 @@ export class CarrinhoService {
   async limparCarrinho(clienteId: number) {
     const carrinho = await this.getCarrinhoByCliente(clienteId);
     await this.itemRepository.delete({ carrinho: { id: carrinho.id } });
+    carrinho.total = 0;
+    await this.carrinhoRepository.save(carrinho);
     return this.getCarrinhoByCliente(clienteId);
   }
+  
   async atualizarItem(clienteId: number, itemId: number, updateItemDto: UpdateItemDto) {
   const item = await this.itemRepository.findOneBy({ id: itemId });
   if (!item) throw new NotFoundException('Item não encontrado');
   item.quantidade = updateItemDto.quantidade;
-  return this.itemRepository.save(item);
+  await this.itemRepository.save(item);
+  await this.recalcularTotal(item.carrinho.id);
+  return  this.getCarrinhoByCliente(clienteId);
+  }
+
+  private async recalcularTotal(carrinhoId: number) {
+    const carrinho = await this.carrinhoRepository.findOne({
+      where: { id: carrinhoId },
+      relations: ['itens', 'itens.produto'],
+    });
+
+    if (!carrinho) return;
+
+    carrinho.total = carrinho.itens.reduce(
+      (sum, item) => sum + item.quantidade * item.produto.preco,
+      0,
+    );
+
+    await this.carrinhoRepository.save(carrinho);
   }
 
 }

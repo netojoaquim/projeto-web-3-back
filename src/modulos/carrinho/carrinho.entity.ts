@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, OneToMany, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, OneToMany, OneToOne, JoinColumn , Column} from 'typeorm';
 import { Cliente } from '../cliente/cliente.entity';
 import { CarrinhoItem } from './carrinho-item.entity';
 
@@ -13,4 +13,7 @@ export class Carrinho {
 
   @OneToMany(() => CarrinhoItem, item => item.carrinho, { cascade: true })
   itens: CarrinhoItem[];
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  total: number;
 }
