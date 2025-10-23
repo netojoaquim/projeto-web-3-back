@@ -35,7 +35,7 @@ export class CreateClienteDto {
     data_nascimento?: Date;
 
     @ApiPropertyOptional({
-        description: 'IDs dos veículos associados',
+        description: 'IDs dos enderecos associados',
         example: [1, 2, 3],
         type: [Number]
     })

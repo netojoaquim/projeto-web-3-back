@@ -15,7 +15,7 @@ export class Cliente {
     email: string;
 
     @Column({ nullable: false })
-    numero_telefone: string;
+    numero_telefone: string;s
 
     @Column({ nullable: false })
     senha: string;
@@ -26,7 +26,7 @@ export class Cliente {
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     data_criacao: Date;
 
-    @OneToMany(() => Endereco, endereco => endereco.cliente, { nullable: true })
+    @OneToMany(() => Endereco, endereco => endereco.cliente, { nullable: true , cascade: true})
     enderecos: Endereco[];
 
     @BeforeInsert()

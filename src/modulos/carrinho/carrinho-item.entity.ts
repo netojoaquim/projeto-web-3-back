@@ -1,0 +1,22 @@
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Carrinho } from './carrinho.entity';
+import { Produto } from '../produto/produto.entity';
+
+@Entity('carrinho_item')
+export class CarrinhoItem {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'int', default: 1 })
+  quantidade: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  valor: number;
+
+  @ManyToOne(() => Carrinho, carrinho => carrinho.itens, { nullable: false, onDelete: 'CASCADE' })
+  carrinho: Carrinho;
+
+  @ManyToOne(() => Produto, { nullable: false })
+  @JoinColumn()
+  produto: Produto;
+}

@@ -41,15 +41,6 @@ export class ClienteController {
     return this.clienteService.findOne(req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('enderecos')
-  @ApiBearerAuth()
-  @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
-  async getVeiculos(@Req() req) {
-    const cliente = await this.clienteService.findOne(req.user.id);
-    return cliente.enderecos || [];
-  }
-
   @Post()
   @ApiOperation({ summary: 'Cria um novo usuário' })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
@@ -69,9 +60,9 @@ export class ClienteController {
     status: 200,
     description: 'Lista de usuários retornada com sucesso',
   })
-  @ApiBearerAuth()
-  @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
-  @UseGuards(AuthGuard('jwt'))
+  //@ApiBearerAuth()
+  //@ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
+  //@UseGuards(AuthGuard('jwt'))
   async findAll() {
     try {
       const clientes = await this.clienteService.findAll();
@@ -90,7 +81,7 @@ export class ClienteController {
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiBearerAuth()
   @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
-  @UseGuards(AuthGuard('jwt'))
+  //@UseGuards(AuthGuard('jwt'))
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const cliente = await this.clienteService.findOne(id);
     if (!cliente) {

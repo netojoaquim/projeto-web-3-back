@@ -1,7 +1,7 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Cliente } from '../cliente/cliente.entity';
 
-@Entity('Endereco')
+@Entity('endereco')
 export class Endereco {
   @PrimaryGeneratedColumn()
   id: number;
@@ -16,7 +16,16 @@ export class Endereco {
   numero: string;
 
   @Column({ nullable: false })
-  modelo: string;
+  cidade: string;
+
+  @Column({ nullable: false })
+  cep: string;
+
+  @Column({ nullable: false })
+  estado: string;
+
+  @Column({ nullable: false, default: false })
+  padrao: boolean;
 
   @ManyToOne(() => Cliente, (cliente) => cliente.enderecos, {
     nullable: false,
