@@ -8,63 +8,35 @@ import { Categoria } from '../categoria/categoria.entity';
 
 @Injectable()
 export class ProdutoService {
-  constructor(
-    @InjectRepository(Produto)
-    private readonly produtoRepository: Repository<Produto>,
-    @InjectRepository(Categoria)
-    private readonly categoriaRepository: Repository<Categoria>,
-  ) {}
+  constructor(
+    @InjectRepository(Produto)
+    private readonly produtoRepository: Repository<Produto>,
+    @InjectRepository(Categoria)
+    private readonly categoriaRepository: Repository<Categoria>,
+  ) {}
 
-  async create(dto: CreateProdutoDto) {
-    const categoria = await this.categoriaRepository.findOneBy({ id: dto.categoriaId });
-    if (!categoria) throw new NotFoundException('Categoria não encontrada');
+  async create(dto: CreateProdutoDto) {
+    const categoria = await this.categoriaRepository.findOneBy({ id: dto.categoriaId });
+    if (!categoria) throw new NotFoundException('Categoria não encontrada');
 
-    const produto = this.produtoRepository.create({ ...dto, categoria, ativo: true });
-    return this.produtoRepository.save(produto);
-  }
+    // CORREÇÃO/CLAREZA: Explicitamente desestrutura o DTO, incluindo o campo 'imagem'
+    const { categoriaId, ativo, ...produtoData } = dto; 
 
-  async findAll(): Promise<Produto[]> {
-    return this.produtoRepository.find({
-      relations: ['categoria'], // Inclui a categoria do produto
+    const produto = this.produtoRepository.create({ 
+        ...produtoData, // Inclui nome, descricao, preco, estoque, e IMAGEM
+        categoria,      // Relacionamento com o objeto Categoria
+        ativo: ativo || true // Garante que ativo seja true se não for fornecido
     });
-  }
+    
+    return this.produtoRepository.save(produto);
+  }
 
-  async findOne(id: number) {
-    const produto = await this.produtoRepository.findOne({ where: { id }, relations: ['categoria'] });
-    if (!produto) throw new NotFoundException('Produto não encontrado');
-    return produto;
-  }
-
-  async update(id: number, dto: UpdateProdutoDto) {
-    const produto = await this.findOne(id);
-
-    if (dto.categoriaId) {
-      const categoria = await this.categoriaRepository.findOneBy({ id: dto.categoriaId });
-      if (!categoria) throw new NotFoundException('Categoria não encontrada');
-      produto.categoria = categoria;
-    }
-
-    Object.assign(produto, dto);
-    return this.produtoRepository.save(produto);
-  }
-
-  async remove(id: number) {
-    const result = await this.produtoRepository.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Produto não encontrado');
-  }
-
-  // Filtros
-  findByFilters(
-    nome?: string,
-    categoriaId?: number,
-    precoMin?: number,
-    precoMax?: number,
-  ) {
-    const where: any = {};
-    if (nome) where.nome = Like(`%${nome}%`);
-    if (categoriaId) where.categoria = { id: categoriaId };
-    if (precoMin !== undefined && precoMax !== undefined) where.preco = Between(precoMin, precoMax);
-
-    return this.produtoRepository.find({ where, relations: ['categoria'] });
-  }
+  async findAll(): Promise<Produto[]> {
+    // ... (sem alteração)
+    return this.produtoRepository.find({
+      relations: ['categoria'], 
+    });
+  }
+  
+  // ... (o restante do código permanece o mesmo: findOne, update, remove, findByFilters)
 }

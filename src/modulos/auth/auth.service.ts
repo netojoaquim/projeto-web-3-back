@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
 import { ClienteService } from 'src/modulos/cliente/cliente.service';
-import { Cliente } from 'src/modulos/cliente/cliente.entity';       
+import { Cliente } from 'src/modulos/cliente/cliente.entity';
 import { AuthJwtPayload } from './dto/auth-jwtPayload.dto';
 
 //import { MailerService } from '@nestjs-modules/mailer';
@@ -25,8 +25,8 @@ export class AuthService {
         private readonly clienteService: ClienteService,
         private jwtService: JwtService,
 
-        @InjectRepository(  Cliente)
-        private readonly clienteRepository: Repository< Cliente>,
+        @InjectRepository(Cliente)
+        private readonly clienteRepository: Repository<Cliente>,
         @InjectRepository(PasswordResetToken)
         private readonly tokenRepository: Repository<PasswordResetToken>,
         //private readonly mailerService: MailerService,
@@ -35,23 +35,25 @@ export class AuthService {
 
     async validateUser(identificador: string, password: string) {
         let cliente: Cliente;
-        try {
-            if (identificador.includes('@')) {
-                cliente = await this.clienteService.findOneByEmail(identificador);
-            } else {
-                cliente = await this.clienteService.findOneByNumber(identificador);
-            }
-        } catch (err) {
-            throw new UnauthorizedException('Credenciais inválidas');
+
+        // 1. TENTA ENCONTRAR O CLIENTE
+        if (identificador.includes('@')) {
+            cliente = await this.clienteService.findOneByEmail(identificador);
+        } else {
+            cliente = await this.clienteService.findOneByNumber(identificador);
         }
 
+        // 2. VERIFICA SE O CLIENTE FOI ENCONTRADO
         if (!cliente) {
             throw new UnauthorizedException('Credenciais inválidas');
         }
 
+        // 3. COMPARA A SENHA
+        // ATENÇÃO: Verifique se 'cliente.senha' realmente contém o HASH
         const isPasswordMatch = await compare(password, cliente.senha);
         if (!isPasswordMatch) throw new UnauthorizedException("Credenciais inválidas");
 
+        // 4. SUCESSO
         return { id: cliente.id };
     }
 
@@ -78,10 +80,10 @@ export class AuthService {
             const minInterval = this.configService.get<number>('MIN_INTERVAL_MS') || 86400000;
 
             if (now - lastRequestTime < minInterval) {
-            // Tempo mínimo ainda não passou
+                // Tempo mínimo ainda não passou
                 throw new BadRequestException('Voce solicitou a redefinição de senha recentemente. Tente novamente mais tarde.');
+            }
         }
-    }
         const rawCode = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedCode = crypto.createHash('sha256').update(rawCode).digest('hex');
         const expiresAt = new Date(Date.now() + 300000);
