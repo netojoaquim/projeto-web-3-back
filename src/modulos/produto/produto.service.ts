@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, Like } from 'typeorm';
+import { Repository, Between, Like,DeleteResult } from 'typeorm';
 import { Produto } from './produto.entity';
 import { CreateProdutoDto } from './dto/create-produto.dto';
 import { UpdateProdutoDto } from './dto/update-produto.dto';
@@ -37,6 +37,40 @@ export class ProdutoService {
       relations: ['categoria'], 
     });
   }
+async findOne(id: number): Promise<Produto> {
+    const produto = await this.produtoRepository.findOne({ 
+      where: { id },
+      relations: ['categoria'],
+    });
+
+    if (!produto) {
+      throw new NotFoundException(`Produto com ID ${id} não encontrado.`);
+    }
+    return produto;
+  }
+
+  async update(id: number, updateProdutoDto: UpdateProdutoDto): Promise<Produto> {
+    const produto = await this.produtoRepository.preload({
+      id: id,
+      ...updateProdutoDto,
+    });
+
+    if (!produto) {
+      throw new NotFoundException(`Produto com ID ${id} não encontrado.`);
+    }
+
+    return this.produtoRepository.save(produto);
+  }
+
+  async remove(id: number): Promise<DeleteResult> {
+    const result = await this.produtoRepository.delete(id);
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Produto com ID ${id} não encontrado para remoção.`);
+    }
+
+    return result;
+  }
   
-  // ... (o restante do código permanece o mesmo: findOne, update, remove, findByFilters)
+  
 }

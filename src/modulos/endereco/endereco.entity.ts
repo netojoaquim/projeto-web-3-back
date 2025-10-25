@@ -9,6 +9,9 @@ export class Endereco {
   @Column({ nullable: false,})
   rua: string;
 
+  @Column({ nullable: true,})
+  apelido: string;
+
   @Column({ nullable: false,})
   bairro: string;
 

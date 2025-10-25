@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateEnderecoDto {
+
+  @ApiProperty({
+    description: 'Casa praia',
+    example: 'Rua das Flores',
+  })
+  apelido: string;
+
   @ApiProperty({
     description: 'Nome da rua do endereço',
     example: 'Rua das Flores',

@@ -7,4 +7,5 @@ export class UpdateEnderecoDto {
     cep?: string;
     padrao?: boolean;
     clienteId?: number;
+    apelido?: string;
 }

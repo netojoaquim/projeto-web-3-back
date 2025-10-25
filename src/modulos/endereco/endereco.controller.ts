@@ -15,7 +15,7 @@ import { UpdateEnderecoDto } from './dto/update-endereco.dto';
 import { EnderecoService } from './endereco.service';
 
 @ApiTags('endereco')
-@Controller('endereco')
+@Controller('cliente/endereco')
 export class EnderecoController {
   constructor(private readonly enderecoService:EnderecoService) {}
 
@@ -24,6 +24,12 @@ export class EnderecoController {
   @ApiResponse({ status: 201, description: 'O endereco foi criado com sucesso.' })
   create(@Body() createEnderecoDto: CreateEnderecoDto) {
     return this.enderecoService.create(createEnderecoDto);
+  }
+
+  @Get(':clienteId')
+  @ApiOperation({ summary: 'Lista todos os endereços de um cliente específico' })
+  findAllByCliente(@Param('clienteId', ParseIntPipe) clienteId: number) {
+    return this.enderecoService.findAllByCliente(clienteId);
   }
 
   @Get()

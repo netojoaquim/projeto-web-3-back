@@ -43,6 +43,19 @@ export class EnderecoService {
     return this.enderecoRepository.find({ relations: ['cliente'] });
   }
 
+  async findAllByCliente(clienteId: number): Promise<Endereco[]> {
+    const enderecos = await this.enderecoRepository.find({
+      where: { cliente: { id: clienteId } }, // associa o relacionamento
+       // opcional, caso queira carregar os dados do cliente
+    });
+
+    if (!enderecos || enderecos.length === 0) {
+      throw new NotFoundException(`Nenhum endereço encontrado para o cliente ${clienteId}`);
+    }
+
+    return enderecos;
+  }
+
   async findOne(id: number): Promise<Endereco> {
     const endereco = await this.enderecoRepository.findOne({
       where: { id },
