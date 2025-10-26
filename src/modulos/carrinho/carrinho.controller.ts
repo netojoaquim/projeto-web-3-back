@@ -29,7 +29,7 @@ export class CarrinhoController {
   @ApiOperation({ summary: 'Atualiza os itens ao carrinho, passando o id do cliente/id do item e a quantidade no json' })
   atualizarItem(
     @Param('clienteId', ParseIntPipe) clienteId: number,
-    @Param('pr', ParseIntPipe) itemId: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
     @Body() updateItemDto: UpdateItemDto,
   ) {
     return this.carrinhoService.atualizarItem(clienteId, itemId, updateItemDto);

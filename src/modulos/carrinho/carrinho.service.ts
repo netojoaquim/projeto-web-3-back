@@ -6,7 +6,6 @@ import { CarrinhoItem } from './carrinho-item.entity';
 import { Produto } from '../produto/produto.entity';
 import { Cliente } from '../cliente/cliente.entity';
 import { UpdateItemDto } from './dto/update-item.dto';
-import { escape } from 'querystring';
 
 @Injectable()
 export class CarrinhoService {
@@ -23,10 +22,12 @@ export class CarrinhoService {
 
   // Pega ou cria o carrinho do cliente
   async getCarrinhoByCliente(clienteId: number): Promise<Carrinho> {
+
     let carrinho = await this.carrinhoRepository.findOne({
       where: { cliente: { id: clienteId } },
       relations: ['itens', 'itens.produto'],
     });
+
     if (!carrinho) {
       const cliente = await this.clienteRepository.findOneBy({ id: clienteId });
       if (!cliente) throw new NotFoundException('Cliente não encontrado');
@@ -130,12 +131,12 @@ export class CarrinhoService {
   }
   
   async atualizarItem(clienteId: number, itemId: number, updateItemDto: UpdateItemDto) {
-  const item = await this.itemRepository.findOneBy({ id: itemId });
-  if (!item) throw new NotFoundException('Item não encontrado');
-  item.quantidade = updateItemDto.quantidade;
-  await this.itemRepository.save(item);
-  await this.recalcularTotal(item.carrinho.id);
-  return  this.getCarrinhoByCliente(clienteId);
+    const item = await this.itemRepository.findOne({ where: {id:itemId},relations:['carrinho'], });
+    if (!item) throw new NotFoundException('Item não encontrado');
+    item.quantidade = updateItemDto.quantidade;
+    await this.itemRepository.save(item);
+    await this.recalcularTotal(item.carrinho.id);
+    return this.getCarrinhoByCliente(clienteId);
   }
 
   private async recalcularTotal(carrinhoId: number) {

@@ -1,6 +1,7 @@
-import { BeforeInsert, Column, Entity, OneToMany, PrimaryGeneratedColumn,BeforeUpdate } from 'typeorm';
+import { BeforeInsert, Column, Entity, OneToMany,OneToOne, PrimaryGeneratedColumn,BeforeUpdate } from 'typeorm';
 import { Endereco } from '../endereco/endereco.entity';
 import * as bcrypt from "bcrypt";
+import { Carrinho } from '../carrinho/carrinho.entity';
 
 @Entity('cliente')
 export class Cliente {
@@ -28,6 +29,8 @@ export class Cliente {
 
     @OneToMany(() => Endereco, endereco => endereco.cliente, { nullable: true , cascade: true})
     enderecos: Endereco[];
+
+    @OneToOne(() => Carrinho, (carrinho)=>carrinho.cliente, { nullable: true, cascade: true})
 
     @BeforeInsert()
     async hashPassword() {
