@@ -27,13 +27,17 @@ import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { ClienteService } from './cliente.service';
 import { JwtAuthGuard } from 'src/modulos/auth/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../auth/roles.decorator';
+import { Rolesguard } from '../auth/roles.guard';
+
 
 @ApiTags('Cliente')
 @Controller('cliente')
 export class ClienteController {
   constructor(private readonly clienteService: ClienteService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, Rolesguard)
+  @Roles('admin')
   @Get('profile')
   @ApiBearerAuth()
   @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
@@ -53,8 +57,11 @@ export class ClienteController {
       throw new BadRequestException('Erro ao criar usuário');
     }
   }
-
+  
   @Get()
+  @Roles('admin')
+  @UseGuards(JwtAuthGuard, Rolesguard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Lista todos os usuários' })
   @ApiResponse({
     status: 200,

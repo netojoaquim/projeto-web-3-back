@@ -3,6 +3,11 @@ import { Endereco } from '../endereco/endereco.entity';
 import * as bcrypt from "bcrypt";
 import { Carrinho } from '../carrinho/carrinho.entity';
 
+export enum UserRole {
+    ADMIN = 'admin',
+    CLIENTE = 'cliente',
+}
+
 @Entity('cliente')
 export class Cliente {
 
@@ -26,6 +31,9 @@ export class Cliente {
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     data_criacao: Date;
+
+    @Column({ type: 'enum', enum: UserRole, default: UserRole.CLIENTE })
+    role: UserRole;
 
     @OneToMany(() => Endereco, endereco => endereco.cliente, { nullable: true , cascade: true})
     enderecos: Endereco[];

@@ -20,7 +20,6 @@ dayjs.extend(timezone);
 
 @Injectable()
 export class AuthService {
-
     constructor(
         private readonly clienteService: ClienteService,
         private jwtService: JwtService,
@@ -58,8 +57,12 @@ export class AuthService {
     }
 
 
-    login(userId: number) {
-        const payload: AuthJwtPayload = { sub: userId }
+    login(cliente: Cliente) {
+        const payload: AuthJwtPayload =
+        {
+            sub: cliente.id,
+            role: cliente.role
+        };
         return this.jwtService.sign(payload);
     }
 
