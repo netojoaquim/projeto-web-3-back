@@ -1,14 +1,11 @@
-import { Controller } from '@nestjs/common';
-import { Body, Get, Param, Post,Patch, Delete } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CreateCategoriaDto } from './dto/create-categoria.dto';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Rolesguard } from '../auth/roles.guard';
 import { CategoriaService } from './categoria.service';
+import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
-import { UseGuards } from '@nestjs/common';
-import {Roles} from '../auth/roles.decorator';
-import {JwtAuthGuard} from '../auth/jwt-auth.guard';
-import {Rolesguard} from '../auth/roles.guard';
 
 
 @ApiTags('categoria')
@@ -16,9 +13,9 @@ import {Rolesguard} from '../auth/roles.guard';
 export class CategoriaController {
   constructor(private readonly categoriaService: CategoriaService) { }
 
-  @UseGuards(JwtAuthGuard, Rolesguard)
-  @Roles('admin')
-  @ApiBearerAuth()
+  //@UseGuards(JwtAuthGuard, Rolesguard)
+  //@Roles('admin')
+  //@ApiBearerAuth()
   @Post()
   @ApiOperation({ summary: 'Cria uma nova categoria' })
   create(@Body() CreateCategoriaDto: CreateCategoriaDto) {
