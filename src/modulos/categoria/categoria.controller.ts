@@ -13,9 +13,9 @@ import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 export class CategoriaController {
   constructor(private readonly categoriaService: CategoriaService) { }
 
-  //@UseGuards(JwtAuthGuard, Rolesguard)
-  //@Roles('admin')
-  //@ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, Rolesguard)
+  @Roles('admin')
+  @ApiBearerAuth()
   @Post()
   @ApiOperation({ summary: 'Cria uma nova categoria' })
   create(@Body() CreateCategoriaDto: CreateCategoriaDto) {

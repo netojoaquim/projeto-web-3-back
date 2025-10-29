@@ -28,9 +28,20 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @ApiBody({ type: LoginDto })
   async login(@Request() req) {
-    const token = this.authService.login(req.user.id);
-    const userData = await this.usuarioService.findOne(req.user.id);
-    return { id: req.user.id, token, usuario: userData };
+    // req.user é o cliente completo retornado pelo LocalStrategy
+    const cliente = req.user;
+
+    // 🔥 Gere o token com o cliente inteiro (inclui id e role)
+    const token = this.authService.login(cliente);
+
+    // Busque os dados atualizados do usuário (opcional)
+    const userData = await this.usuarioService.findOne(cliente.id);
+
+    return {
+      id: cliente.id,
+      token,
+      usuario: userData,
+    };
   }
 
   @Post('forgot-password')
