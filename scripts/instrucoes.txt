@@ -1,0 +1,6 @@
+Restaurar o banco em outra máquina com Docker:
+bash scripts/restore_db.sh
+
+
+backup:
+bash scripts/backup_db.sh
