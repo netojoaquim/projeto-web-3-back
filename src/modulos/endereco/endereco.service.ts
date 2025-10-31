@@ -45,8 +45,7 @@ export class EnderecoService {
 
   async findAllByCliente(clienteId: number): Promise<Endereco[]> {
     const enderecos = await this.enderecoRepository.find({
-      where: { cliente: { id: clienteId } }, // associa o relacionamento
-       // opcional, caso queira carregar os dados do cliente
+      where: { cliente: { id: clienteId } },
     });
 
     if (!enderecos || enderecos.length === 0) {

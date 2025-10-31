@@ -32,9 +32,6 @@ export class PedidoService {
     private enderecoRepo: Repository<Endereco>,
   ) {}
 
-  /**
-   * Finaliza o pedido a partir do carrinho
-   */
   async criarPedido(dto: CreatePedidoDto) {
     const cliente = await this.clienteRepo.findOne({ where: { id: dto.userId } });
     if (!cliente) throw new NotFoundException('Cliente não encontrado');
@@ -77,9 +74,6 @@ export class PedidoService {
     return saved;
   }
 
-  /**
-   * Atualiza o status de um pedido
-   */
   async atualizarStatus(pedidoId: number, status: PedidoStatus) {
     const pedido = await this.pedidoRepo.findOne({
       where: { id: pedidoId },
@@ -102,9 +96,6 @@ export class PedidoService {
     return await this.pedidoRepo.save(pedido);
   }
 
-  /**
-   * Lista todos os pedidos de um cliente
-   */
   async listarPorCliente(clienteId: number) {
     return await this.pedidoRepo.find({
       where: { cliente: { id: clienteId } },
@@ -118,9 +109,7 @@ export class PedidoService {
     });
   }
 
-  /**
-   * Retorna um pedido específico
-   */
+
   async buscarPorId(id: number) {
     const pedido = await this.pedidoRepo.findOne({
       where: { id },

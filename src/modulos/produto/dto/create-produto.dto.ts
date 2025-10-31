@@ -1,8 +1,8 @@
 // src/modulos/produto/dto/create-produto.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsPositive, Min, IsBoolean } from 'class-validator'; // <--- NOVOS IMPORTS
-import { Type } from 'class-transformer'; // <--- NOVO IMPORT
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsPositive, Min, IsBoolean } from 'class-validator'; 
+import { Type } from 'class-transformer'; 
 
 export class CreateProdutoDto {
     @ApiProperty({
@@ -28,7 +28,7 @@ export class CreateProdutoDto {
     @IsNotEmpty()
     @IsNumber()
     @IsPositive()
-    @Type(() => Number) // Garante a conversão da string do frontend para number
+    @Type(() => Number) 
     preco: number;
 
     @ApiProperty({description: 'Quantidade em estoque',
@@ -37,7 +37,7 @@ export class CreateProdutoDto {
     @IsNotEmpty()
     @IsNumber()
     @Min(0)
-    @Type(() => Number) // Garante a conversão
+    @Type(() => Number) 
     estoque: number;
 
     @ApiProperty({ required: false, description: 'Nome do arquivo da imagem (retornado pelo Multer)',
@@ -53,18 +53,16 @@ export class CreateProdutoDto {
     })
     @IsNotEmpty()
     @IsNumber()
-    @Type(() => Number) // Garante a conversão do ID para number
+    @Type(() => Number) 
     categoriaId: number;
 
-    // Nota: O campo 'ativo' na sua Entity é um boolean.
-    // Se o TypeORM for configurado para aceitar 1/0, isso é OK.
-    // Se for um boolean, o tipo deve ser IsBoolean. Assumindo que você quer um boolean:
+    
     @ApiProperty({
         description: 'Ativo - true para ativo, false para inativo',
         example: true
     })
     @IsOptional()
-    @IsBoolean() // Espera true ou false
-    @Type(() => Boolean) // Garante que a string "true"/"false" seja convertida
-    ativo: boolean; // Alterei o tipo para boolean, mais alinhado com o que é esperado
+    @IsBoolean() 
+    @Type(() => Boolean) 
+    ativo: boolean; 
 }

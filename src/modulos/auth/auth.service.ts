@@ -39,7 +39,6 @@ export class AuthService {
   async validateUser(identificador: string, password: string) {
     let cliente: Cliente;
 
-    // 1️⃣ Busca o cliente por e-mail ou número
     if (identificador.includes('@')) {
       cliente = await this.clienteService.findOneByEmail(identificador);
     } else {
@@ -50,20 +49,18 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
-    // 2️⃣ Verifica senha
     const isPasswordMatch = await compare(password, cliente.senha);
     if (!isPasswordMatch) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
-    // ✅ Retorna o cliente completo (incluindo role!)
     return cliente;
   }
 
   login(cliente: Cliente) {
   const payload = {
-    sub: cliente.id,  // 🔥 ID do usuário
-    role: cliente.role, // 🔥 Papel (admin, cliente, etc)
+    sub: cliente.id,  
+    role: cliente.role, 
   };
 
   return {

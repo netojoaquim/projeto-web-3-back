@@ -1,5 +1,3 @@
-// src/modulos/produto/produto.controller.ts (ALTERADO)
-
 import { 
   Controller, 
   Get, 
@@ -51,7 +49,7 @@ export class ProdutoController {
       }),
       // filtro para aceitar apenas tipos de imagem
       fileFilter: (req, file, cb) => {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|jfif)$/i)) {
             return cb(new BadRequestException('Apenas arquivos de imagem (jpg, jpeg, png, gif) são permitidos!'), false);
         }
         cb(null, true);
@@ -68,10 +66,6 @@ export class ProdutoController {
         url: `uploads/${file.filename}`
     };
   }
-
-  // ====================================================================
-  // ROTAS EXISTENTES
-  // ====================================================================
 
   @ApiOperation({ summary: 'Cria um novo produto' })
   @Post() create(@Body() dto: CreateProdutoDto) {

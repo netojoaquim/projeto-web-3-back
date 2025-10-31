@@ -19,13 +19,12 @@ export class ProdutoService {
         const categoria = await this.categoriaRepository.findOneBy({ id: dto.categoriaId });
         if (!categoria) throw new NotFoundException('Categoria não encontrada');
 
-        // CORREÇÃO/CLAREZA: Explicitamente desestrutura o DTO, incluindo o campo 'imagem'
         const { categoriaId, ativo, ...produtoData } = dto;
 
         const produto = this.produtoRepository.create({
-            ...produtoData, // Inclui nome, descricao, preco, estoque, e IMAGEM
-            categoria,      // Relacionamento com o objeto Categoria
-            ativo: ativo || true // Garante que ativo seja true se não for fornecido
+            ...produtoData, 
+            categoria,      
+            ativo: ativo || true
         });
 
         return this.produtoRepository.save(produto);
@@ -70,7 +69,7 @@ export class ProdutoService {
             }
             return result;
         } catch (error) {
-            console.error('Erro ao remover produto:', error); // log completo no servidor
+            console.error('Erro ao remover produto:', error);
             throw new InternalServerErrorException(
                 'Não foi possível remover o produto. Pode está em um carrinho ou pedido ativo.',
             );

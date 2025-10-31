@@ -28,13 +28,10 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @ApiBody({ type: LoginDto })
   async login(@Request() req) {
-    // req.user é o cliente completo retornado pelo LocalStrategy
     const cliente = req.user;
 
-    // 🔥 Gere o token com o cliente inteiro (inclui id e role)
     const token = this.authService.login(cliente);
 
-    // Busque os dados atualizados do usuário (opcional)
     const userData = await this.usuarioService.findOne(cliente.id);
 
     return {

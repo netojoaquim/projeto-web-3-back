@@ -21,7 +21,7 @@ export class ClienteService {
 
     if (enderecos && enderecos.length > 0) {
       const enderecoEntities = await this.enderecoRepository.findBy({
-        id: In(enderecos.map(Number)), // Certifique-se que são números
+        id: In(enderecos.map(Number)), 
       });
       cliente.enderecos = enderecoEntities;
     }
@@ -105,10 +105,8 @@ export class ClienteService {
     delete updateClienteDto.enderecos;
     }
 
-    // Atualiza campos simples
     Object.assign(cliente, updateClienteDto);
 
-    // Atualiza relação de veículos, se enviado no DTO
     if (updateClienteDto.enderecos) {
       const enderecos = await this.enderecoRepository.findBy({
         id: In(updateClienteDto.enderecos),

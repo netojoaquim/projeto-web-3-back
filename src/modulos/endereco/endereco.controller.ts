@@ -44,7 +44,6 @@ export class EnderecoController {
     return this.enderecoService.findOne(id);
   }
 
-  //listar endereco padrao de um cliente
   @Get('padrao/:clienteId')
   @ApiOperation({ summary: 'Obtém o endereço padrão de um cliente' })
   getEnderecoPadrao(@Param('clienteId', ParseIntPipe) clienteId: number) {
