@@ -1,4 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateClienteDto {
     @ApiProperty({
@@ -33,6 +35,21 @@ export class CreateClienteDto {
         format: 'date'
     })
     data_nascimento?: Date;
+
+    @ApiPropertyOptional({
+        description: 'Indica se o cliente está ativo',
+        example: true,
+        default: true
+    })
+    @ApiPropertyOptional({
+        description: 'Indica se o cliente está ativo',
+        example: true,
+        default: true
+    })
+    @IsOptional()
+        @IsBoolean()
+        @Type(() => Boolean)
+        ativo: boolean;
 
     @ApiPropertyOptional({
         description: 'IDs dos enderecos associados',

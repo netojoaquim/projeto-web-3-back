@@ -35,6 +35,9 @@ export class Cliente {
     @Column({ type: 'enum', enum: UserRole, default: UserRole.CLIENTE })
     role: UserRole;
 
+    @Column({nullable:false ,default: true })
+     ativo: boolean;
+
     @OneToMany(() => Endereco, endereco => endereco.cliente, { nullable: true , cascade: true})
     enderecos: Endereco[];
 

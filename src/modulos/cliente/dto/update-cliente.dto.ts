@@ -1,38 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { PartialType } from '@nestjs/swagger';
+import { CreateClienteDto } from './create-cliente.dto';
 
-export class UpdateClienteDto {
-
-    @ApiProperty({
-        description: 'Nome completo do usuário',
-        example: 'João da Silva'
-    })
-    nome_completo?: string;
-
-    @ApiProperty({
-        description: 'Email do usuário',
-        example: 'joao.silva@email.com'
-    })
-    email?: string;
-
-    @ApiProperty({
-        description: 'Número de telefone',
-        example: '+55 11 99999-9999'
-    })
-    numero_telefone?: string;
-
-    @ApiProperty({
-            description: 'Senha do usuário',
-            example: 'senhaSegura123'
-        })
-    senha?: string;
-
-    @ApiPropertyOptional({
-        description: 'Data de nascimento do usuário',
-        example: '1990-05-25',
-        type: String,
-        format: 'date'
-    })
-    data_nascimento?: Date;
-
-    enderecos?: number[];
-}
+export class UpdateClienteDto extends PartialType(CreateClienteDto) {}

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Endereco } from '../endereco/endereco.entity';
 import { DeleteResult, In, Repository } from 'typeorm';
@@ -99,7 +99,10 @@ export class ClienteService {
     });
 
     if (!cliente) {
-      throw new Error('Usuário não encontrado');
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    if (updateClienteDto.enderecos === undefined) {
+    delete updateClienteDto.enderecos;
     }
 
     // Atualiza campos simples
