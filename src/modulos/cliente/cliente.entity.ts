@@ -2,6 +2,7 @@ import { BeforeInsert, Column, Entity, OneToMany,OneToOne, PrimaryGeneratedColum
 import { Endereco } from '../endereco/endereco.entity';
 import * as bcrypt from "bcrypt";
 import { Carrinho } from '../carrinho/carrinho.entity';
+import { Pedido } from '../pedido/pedido.entity';
 
 export enum UserRole {
     ADMIN = 'admin',
@@ -40,6 +41,10 @@ export class Cliente {
 
     @OneToMany(() => Endereco, endereco => endereco.cliente, { nullable: true , cascade: true})
     enderecos: Endereco[];
+
+    @OneToMany(() => Pedido, (pedido) => pedido.cliente)
+    pedidos: Pedido[];
+
 
     @OneToOne(() => Carrinho, (carrinho)=>carrinho.cliente, { nullable: true, cascade: true})
 

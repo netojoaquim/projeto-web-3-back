@@ -20,7 +20,6 @@ export class CarrinhoService {
     private readonly clienteRepository: Repository<Cliente>,
   ) {}
 
-  // Pega ou cria o carrinho do cliente
   async getCarrinhoByCliente(clienteId: number): Promise<Carrinho> {
 
     let carrinho = await this.carrinhoRepository.findOne({
@@ -38,7 +37,6 @@ export class CarrinhoService {
     return carrinho;
   }
 
-  // Adiciona um produto ao carrinho
   async adicionarItem(clienteId: number, produtoId: number, quantidade: number) {
     if (quantidade <= 0) throw new BadRequestException('Quantidade deve ser maior que zero');
     
@@ -56,7 +54,6 @@ export class CarrinhoService {
       throw new BadRequestException(`O produto "${produto.nome}" está sem estoque e não pode ser adicionado ao carrinho.`);
     }
 
-    // Verifica se o item já existe
     let item = carrinho.itens.find(i => i.produto.id === produtoId);
 
     if (item) {
@@ -78,9 +75,9 @@ export class CarrinhoService {
     }
 
       item = this.itemRepository.create({ carrinho,
-         produto, 
+         produto,
          quantidade,
-          valor: produto.preco 
+          valor: produto.preco
         });
       carrinho.itens.push(item);
     }
@@ -91,7 +88,6 @@ export class CarrinhoService {
     return this.getCarrinhoByCliente(clienteId);
   }
 
-  // Atualiza a quantidade de um item
   async atualizarQuantidade(clienteId: number, itemId: number, quantidade: number) {
     if (quantidade < 0) throw new BadRequestException('Quantidade não pode ser negativa');
 
@@ -100,7 +96,6 @@ export class CarrinhoService {
     if (!item) throw new NotFoundException('Item não encontrado no carrinho');
 
     if (quantidade === 0) {
-      // Remove se quantidade for 0
       await this.itemRepository.delete(item.id);
     } else {
       item.quantidade = quantidade;
@@ -110,7 +105,6 @@ export class CarrinhoService {
     return this.getCarrinhoByCliente(clienteId);
   }
 
-  // Remove um item do carrinho
   async removerItem(clienteId: number, itemId: number) {
     const carrinho = await this.getCarrinhoByCliente(clienteId);
     const item = carrinho.itens.find(i => i.id === itemId);
@@ -121,15 +115,20 @@ export class CarrinhoService {
     return this.getCarrinhoByCliente(clienteId);
   }
 
-  // Limpar carrinho
   async limparCarrinho(clienteId: number) {
     const carrinho = await this.getCarrinhoByCliente(clienteId);
-    await this.itemRepository.delete({ carrinho: { id: carrinho.id } });
-    carrinho.total = 0;
-    await this.carrinhoRepository.save(carrinho);
-    return this.getCarrinhoByCliente(clienteId);
+    if (!carrinho){
+      throw new Error('carrinho não encontrado')
+    }
+    await this.carrinhoRepository.remove(carrinho);
+    const novoCarrinho = this.carrinhoRepository.create({
+    cliente: { id: clienteId },
+    total: 0,
+    itens: [],
+  })
+    await await this.carrinhoRepository.save(novoCarrinho);
   }
-  
+
   async atualizarItem(clienteId: number, itemId: number, updateItemDto: UpdateItemDto) {
     const item = await this.itemRepository.findOne({ where: {id:itemId},relations:['carrinho'], });
     if (!item) throw new NotFoundException('Item não encontrado');

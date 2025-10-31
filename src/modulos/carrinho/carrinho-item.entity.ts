@@ -13,11 +13,12 @@ export class CarrinhoItem {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   valor: number;
 
-  @ManyToOne(() => Carrinho, carrinho => carrinho.itens, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Carrinho, carrinho => carrinho.itens, {onDelete: 'CASCADE' })
+  @JoinColumn({name:'carrinhoId'})
   carrinho: Carrinho;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    data_criacao: Date;
+  data_criacao: Date;
 
   @ManyToOne(() => Produto, { nullable: false })
   @JoinColumn()

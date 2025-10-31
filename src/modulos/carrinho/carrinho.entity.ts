@@ -11,7 +11,7 @@ export class Carrinho {
   @JoinColumn()
   cliente: Cliente;
 
-  @OneToMany(() => CarrinhoItem, item => item.carrinho, { cascade: true })
+  @OneToMany(() => CarrinhoItem, item => item.carrinho, { cascade: true , eager:true})
   itens: CarrinhoItem[];
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })

@@ -10,6 +10,7 @@ import { CategoriaModule } from './modulos/categoria/categoria.module';
 import { ProdutoModule } from './modulos/produto/produto.module';
 import { CarrinhoModule } from './modulos/carrinho/carrinho.module';
 import { CarrinhoItem } from './modulos/carrinho/carrinho-item.entity';
+import { PedidoModule } from './modulos/pedido/pedido.module';
 
 @Module({
   imports: [
@@ -20,9 +21,10 @@ import { CarrinhoItem } from './modulos/carrinho/carrinho-item.entity';
     ProdutoModule,
     CarrinhoModule,
     CarrinhoItem,
+    PedidoModule,
     ConfigModule.forRoot({
       isGlobal: true,
-    }),  
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST||'localhost',
@@ -32,7 +34,7 @@ import { CarrinhoItem } from './modulos/carrinho/carrinho-item.entity';
       database: process.env.DB_NAME,
       entities: [__dirname + '/modulos/**/*.entity{.ts,.js}'],
       logging: true,
-      synchronize: true, 
+      synchronize: true,
     }),
   ],
   controllers: [AppController],

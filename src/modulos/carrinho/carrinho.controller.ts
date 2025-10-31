@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, ParseIntPipe } from '@nestjs/common';
 import { CarrinhoService } from './carrinho.service';
-import { AddItemDto } from './dto/add-item.dto';
+import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 import { ApiOperation } from '@nestjs/swagger';
 
@@ -18,10 +18,10 @@ export class CarrinhoController {
   @ApiOperation({ summary: 'Adiciona itens ao carrinho, passando o id do item e a quantidade no json  ' })
   adicionarItem(
     @Param('clienteId', ParseIntPipe) clienteId: number,
-    @Body() addItemDto: AddItemDto,
+    @Body() createItemDto: CreateItemDto,
   ) {
 
-    const { produtoId, quantidade } = addItemDto;
+    const { produtoId, quantidade } = createItemDto;
     return this.carrinhoService.adicionarItem(clienteId, produtoId, quantidade);
   }
 
