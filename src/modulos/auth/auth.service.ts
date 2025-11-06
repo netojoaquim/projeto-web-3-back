@@ -73,7 +73,7 @@ export class AuthService {
   async forgotPassword(email: string): Promise<void> {
     const cliente = await this.clienteRepository.findOneBy({ email });
     if (!cliente) {
-      return;
+      throw new BadRequestException('Email não cadastrado na base de dados.');
     }
     const existingToken = await this.tokenRepository.findOne({
       where: { cliente: { id: cliente.id } },
@@ -110,11 +110,11 @@ export class AuthService {
     });
     await this.tokenRepository.save(resetToken);
 
-    //Envia o e-mail usando o template Handlebars
+    //envia o e-mail
     await this.mailerService.sendMail({
       to: cliente.email,
       subject: 'Código de Recuperação de Senha - Guarashop',
-      template: 'recuperacao-senha', // Nome do caminho do arquivo .hbs
+      template: 'recuperacao-senha',
       context: {
         nome: cliente.nome_completo,
         code: rawCode,
@@ -157,7 +157,7 @@ export class AuthService {
     await this.mailerService.sendMail({
       to: usuario.email,
       subject: 'Alteração de senha- Guarashop',
-      template: 'alteracao-senha', // Nome do caminho do arquivo .hbs
+      template: 'alteracao-senha',
       context: {
         nome: usuario.nome_completo,
         date: agoraRecife.format('DD/MM/YYYY'),
