@@ -51,8 +51,8 @@ import { join } from 'path';
             user: config.get<string>('MAIL_USER'),
             pass: config.get<string>('MAIL_PASSWORD'),
           },
-          logger: true,
-          debug: true,
+          //logger: true,
+          //debug: true,
         },
         defaults: {
           from: config.get<string>('MAIL_FROM'),
