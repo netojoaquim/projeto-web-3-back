@@ -30,7 +30,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorator';
 import { Rolesguard } from '../auth/roles.guard';
 
-
 @ApiTags('Cliente')
 @Controller('cliente')
 export class ClienteController {
@@ -54,10 +53,17 @@ export class ClienteController {
       const cliente = await this.clienteService.create(createClienteDto);
       return { message: 'Usuário criado com sucesso', data: cliente };
     } catch (error) {
+      console.error('erro ao criar cliente',error);
+      // Se já existir a mensagem do service (como email duplicado), repassa ela
+      if (error.response?.message) {
+        throw new BadRequestException(error.response.message);
+      }
+
+      // fallback genérico
       throw new BadRequestException('Erro ao criar usuário');
     }
   }
-  
+
   @Get()
   @Roles('admin')
   @UseGuards(JwtAuthGuard, Rolesguard)

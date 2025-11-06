@@ -48,6 +48,9 @@ export class AuthService {
     if (!cliente) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
+    if (!cliente.ativo) {
+      throw new UnauthorizedException('Usuário desativado');
+    }
 
     const isPasswordMatch = await compare(password, cliente.senha);
     if (!isPasswordMatch) {
