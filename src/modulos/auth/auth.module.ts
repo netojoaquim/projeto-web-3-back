@@ -10,6 +10,7 @@ import { PasswordResetToken } from './password-reset-token.entity';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     ]),
     JwtModule.registerAsync(jwtConfig.asProvider()),
     ClienteModule,
+    MailerModule,
     ConfigModule.forFeature(jwtConfig),
   ],
   controllers: [AuthController],

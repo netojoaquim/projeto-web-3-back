@@ -7,9 +7,11 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ""      # senha vazia para desenvolvimento
+      POSTGRES_PASSWORD: ""
       POSTGRES_DB: ecommerce_db
       POSTGRES_HOST_AUTH_METHOD: trust
+      TZ: America/Recife
+      PGTZ: America/Recife
     ports:
       - "5433:5432"
     volumes:

@@ -8,8 +8,7 @@ import { compare } from 'bcrypt';
 import { ClienteService } from 'src/modulos/cliente/cliente.service';
 import { Cliente } from 'src/modulos/cliente/cliente.entity';
 import { AuthJwtPayload } from './dto/auth-jwtPayload.dto';
-
-//import { MailerService } from '@nestjs-modules/mailer';
+import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as crypto from 'crypto';
@@ -32,7 +31,7 @@ export class AuthService {
     private readonly clienteRepository: Repository<Cliente>,
     @InjectRepository(PasswordResetToken)
     private readonly tokenRepository: Repository<PasswordResetToken>,
-    //private readonly mailerService: MailerService,
+    private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -61,16 +60,15 @@ export class AuthService {
   }
 
   login(cliente: Cliente) {
-  const payload = {
-    sub: cliente.id,  
-    role: cliente.role, 
-  };
+    const payload = {
+      sub: cliente.id,
+      role: cliente.role,
+    };
 
-  return {
-    access_token: this.jwtService.sign(payload),
-  };
-}
-
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
+  }
 
   async forgotPassword(email: string): Promise<void> {
     const cliente = await this.clienteRepository.findOneBy({ email });
@@ -86,8 +84,8 @@ export class AuthService {
       const now = Date.now();
       const lastRequestTime = existingToken.createdAt.getTime();
 
-      const minInterval =
-        this.configService.get<number>('MIN_INTERVAL_MS') || 86400000;
+      const minIntervalEnv = this.configService.get<string>('MIN_INTERVAL_MS');
+      const minInterval = Number(minIntervalEnv);
 
       if (now - lastRequestTime < minInterval) {
         // Tempo mínimo ainda não passou
@@ -112,19 +110,16 @@ export class AuthService {
     });
     await this.tokenRepository.save(resetToken);
 
-    //const resetLink = `${this.configService.get<string>('FRONTEND_URL')}/reset-password?token=${rawCode}`;
-
-    // Envia o e-mail usando o template Handlebars
-    // await this.mailerService.sendMail({
-    //     to: cliente.email,
-    //     subject: 'Código de Recuperação de Senha - CaronaFC',
-    //     template: 'recuperacao-senha', // Nome do caminho do arquivo .hbs
-    //     context: {
-    //         nome: cliente.nome_completo,
-    //         code: rawCode,
-    //         //link: resetLink,
-    //     },
-    // });
+    //Envia o e-mail usando o template Handlebars
+    await this.mailerService.sendMail({
+      to: cliente.email,
+      subject: 'Código de Recuperação de Senha - Guarashop',
+      template: 'recuperacao-senha', // Nome do caminho do arquivo .hbs
+      context: {
+        nome: cliente.nome_completo,
+        code: rawCode,
+      },
+    });
   }
 
   async resetPassword(
@@ -140,11 +135,15 @@ export class AuthService {
 
     const resetToken = await this.tokenRepository.findOne({
       where: { token: hashedCode, cliente: { email } },
-      relations: ['usuario'],
+      relations: ['cliente'],
     });
 
-    if (!resetToken || resetToken.expiresAt < new Date()) {
-      throw new UnauthorizedException('Token inválido ou expirado.');
+    if (!resetToken) {
+      throw new UnauthorizedException('Token inválido.');
+    }
+
+    if (resetToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Token expirado.');
     }
 
     const usuario = resetToken.cliente;
@@ -153,17 +152,17 @@ export class AuthService {
     await this.clienteRepository.save(usuario);
     await this.tokenRepository.delete(resetToken.id);
 
-    // const agoraRecife = dayjs().tz('America/Recife');
+    const agoraRecife = dayjs().tz('America/Recife');
 
-    // await this.mailerService.sendMail({
-    //     to: usuario.email,
-    //     subject: 'Alteração de senha- CaronaFC',
-    //     template: 'alteracao-senha', // Nome do caminho do arquivo .hbs
-    //     context: {
-    //         nome: usuario.nome_completo,
-    //         date: agoraRecife.format('DD/MM/YYYY'),
-    //         time: agoraRecife.format('HH:mm:ss'),
-    //     },
-    // });
+    await this.mailerService.sendMail({
+      to: usuario.email,
+      subject: 'Alteração de senha- Guarashop',
+      template: 'alteracao-senha', // Nome do caminho do arquivo .hbs
+      context: {
+        nome: usuario.nome_completo,
+        date: agoraRecife.format('DD/MM/YYYY'),
+        time: agoraRecife.format('HH:mm:ss'),
+      },
+    });
   }
 }

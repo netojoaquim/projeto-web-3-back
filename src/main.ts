@@ -4,6 +4,9 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+process.env.TZ = 'America/Recife';
+console.log("Hora atual do NestJS:", new Date().toString());
+
 
 async function bootstrap() {
   
