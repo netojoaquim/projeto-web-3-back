@@ -19,7 +19,7 @@ export class PasswordResetToken {
   @ManyToOne(() => Cliente, { eager: true, onDelete: 'CASCADE' })
   cliente: Cliente;
 
-  @CreateDateColumn()
+  @CreateDateColumn({type:'timestamptz'})
   createdAt: Date;
 
   @Column()
