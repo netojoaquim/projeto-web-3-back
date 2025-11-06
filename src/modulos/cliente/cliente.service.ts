@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException,BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Endereco } from '../endereco/endereco.entity';
 import { DeleteResult, In, Repository } from 'typeorm';
@@ -13,19 +13,31 @@ export class ClienteService {
     private readonly clienteRepository: Repository<Cliente>,
     @InjectRepository(Endereco)
     private readonly enderecoRepository: Repository<Endereco>,
-  ) { }
+  ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    const { enderecos, ...rest } = createClienteDto;
-    const cliente = this.clienteRepository.create(rest);
+    const { enderecos, email, ...rest } = createClienteDto;
 
+    // 🔍 Verifica se já existe cliente com o mesmo e-mail
+    const existente = await this.clienteRepository.findOne({
+      where: { email },
+    });
+    if (existente) {
+      throw new BadRequestException('Já existe um usuário com este e-mail. Faça login ou redefina sua senha');
+    }
+
+    // Cria a instância do cliente
+    const cliente = this.clienteRepository.create({ email, ...rest });
+
+    // Se tiver endereços vinculados, associa corretamente
     if (enderecos && enderecos.length > 0) {
       const enderecoEntities = await this.enderecoRepository.findBy({
-        id: In(enderecos.map(Number)), 
+        id: In(enderecos.map(Number)),
       });
       cliente.enderecos = enderecoEntities;
     }
 
+    // Salva o novo cliente no banco
     return this.clienteRepository.save(cliente);
   }
 
@@ -77,7 +89,6 @@ export class ClienteService {
     return cliente;
   }
 
-
   async findOne(id: number): Promise<Cliente> {
     const cliente = await this.clienteRepository.findOne({
       where: { id },
@@ -102,7 +113,7 @@ export class ClienteService {
       throw new NotFoundException('Usuário não encontrado');
     }
     if (updateClienteDto.enderecos === undefined) {
-    delete updateClienteDto.enderecos;
+      delete updateClienteDto.enderecos;
     }
 
     Object.assign(cliente, updateClienteDto);

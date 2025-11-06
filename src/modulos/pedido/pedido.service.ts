@@ -77,17 +77,39 @@ export class PedidoService {
   async atualizarStatus(pedidoId: number, status: PedidoStatus) {
     const pedido = await this.pedidoRepo.findOne({
       where: { id: pedidoId },
-      relations: ['pagamento'],
+      relations: ['pagamento','itens','itens.produto'],
     });
 
     if (!pedido) throw new NotFoundException('Pedido não encontrado');
 
     pedido.status = status;
 
-    // Sincroniza status de pagamento se for o caso
     if (status === PedidoStatus.PAGO) {
       pedido.pagamento.status = PagamentoStatus.PAGO;
       await this.pagamentoRepo.save(pedido.pagamento);
+      for (const item of pedido.itens) {
+      const produto = item.produto;
+
+      if (!produto) continue;
+
+      if (produto.estoque < item.quantidade) {
+        throw new BadRequestException(
+          `Estoque insuficiente para o produto ${produto.nome}`
+        );
+      }
+
+      produto.estoque -= item.quantidade;
+
+      // marca como inativo se zerar
+      if (produto.estoque <= 0) {
+        produto.estoque = 0;
+        produto.ativo = false;
+      }
+
+      await this.produtoRepo.save(produto);
+    }
+
+
     } else if (status === PedidoStatus.CANCELADO) {
       pedido.pagamento.status = PagamentoStatus.CANCELADO;
       await this.pagamentoRepo.save(pedido.pagamento);
