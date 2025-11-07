@@ -26,7 +26,6 @@ import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { ClienteService } from './cliente.service';
 import { JwtAuthGuard } from 'src/modulos/auth/jwt-auth.guard';
-import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorator';
 import { Rolesguard } from '../auth/roles.guard';
 
@@ -73,9 +72,9 @@ export class ClienteController {
     status: 200,
     description: 'Lista de usuários retornada com sucesso',
   })
-  //@ApiBearerAuth()
-  //@ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
-  //@UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
+  @UseGuards(JwtAuthGuard, Rolesguard)
   async findAll() {
     try {
       const clientes = await this.clienteService.findAll();
@@ -94,7 +93,7 @@ export class ClienteController {
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiBearerAuth()
   @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
-  //@UseGuards(AuthGuard('jwt'))
+
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const cliente = await this.clienteService.findOne(id);
     if (!cliente) {
@@ -109,7 +108,6 @@ export class ClienteController {
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiBearerAuth()
   @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
-  @UseGuards(AuthGuard('jwt'))
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateClienteDto: UpdateClienteDto,
@@ -127,7 +125,8 @@ export class ClienteController {
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @ApiBearerAuth()
   @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido' })
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard, Rolesguard)
+  @Roles('admin')
   async remove(@Param('id', ParseIntPipe) id: number) {
     const deleted = await this.clienteService.remove(id);
     if (!deleted) {
