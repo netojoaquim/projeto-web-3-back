@@ -7,13 +7,21 @@ import {
     ParseIntPipe,
     Patch,
     Post,
-    NotFoundException
+    NotFoundException,
+    UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateEnderecoDto } from './dto/create-endereco.dto';
 import { UpdateEnderecoDto } from './dto/update-endereco.dto';
 import { EnderecoService } from './endereco.service';
+import { JwtAuthGuard } from 'src/modulos/auth/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
+import {
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @ApiTags('endereco')
 @Controller('cliente/endereco')
 export class EnderecoController {
