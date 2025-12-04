@@ -16,7 +16,7 @@ Este é um projeto de e-commerce com **backend em NestJs**.
 
     JWT_SECRET=<>
     # JWT_SECRET=<secret>
-    DB_HOST=postgres
+    DB_HOST=localhost
     DB_PORT=5432
     DB_USERNAME=postgres
     DB_PASSWORD=6415
@@ -30,7 +30,7 @@ Este é um projeto de e-commerce com **backend em NestJs**.
     MAIL_PORT=465
     MAIL_SECURE=true
     MAIL_USER=<email>
-    MAIL_PASSWORD=qtvi jbxf uhoh  #4 ultimos removido
+    MAIL_PASSWORD=qtvi jbxf uhoh abcd #recriar senha de app
     MAIL_FROM="Guarashop <email>"
     #horario
     TZ=America/Recife
