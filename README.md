@@ -15,7 +15,6 @@ Este é um projeto de e-commerce com **backend em NestJs**.
     ```ini
 
     JWT_SECRET=<>
-    # JWT_SECRET=<secret>
     DB_HOST=localhost
     DB_PORT=5432
     DB_USERNAME=postgres

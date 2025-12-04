@@ -36,7 +36,7 @@ import { join } from 'path';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       entities: [__dirname + '/modulos/**/*.entity{.ts,.js}'],
-      logging: true,
+      //logging: true,
       synchronize: true,
     }),
     MailerModule.forRootAsync({
