@@ -3,6 +3,7 @@ import { Endereco } from '../endereco/endereco.entity';
 import * as bcrypt from "bcrypt";
 import { Carrinho } from '../carrinho/carrinho.entity';
 import { Pedido } from '../pedido/pedido.entity';
+import { Exclude } from 'class-transformer';
 
 export enum UserRole {
     ADMIN = 'admin',
@@ -25,6 +26,7 @@ export class Cliente {
     numero_telefone: string;s
 
     @Column({ nullable: false })
+    @Exclude()
     senha: string;
 
     @Column({ type: 'date', nullable: true })

@@ -22,8 +22,8 @@ export class ProdutoService {
         const { categoriaId, ativo, ...produtoData } = dto;
 
         const produto = this.produtoRepository.create({
-            ...produtoData, 
-            categoria,      
+            ...produtoData,
+            categoria,
             ativo: ativo || true
         });
 

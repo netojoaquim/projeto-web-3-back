@@ -41,11 +41,6 @@ export class CreateClienteDto {
         example: true,
         default: true
     })
-    @ApiPropertyOptional({
-        description: 'Indica se o cliente está ativo',
-        example: true,
-        default: true
-    })
     @IsOptional()
         @IsBoolean()
         @Type(() => Boolean)

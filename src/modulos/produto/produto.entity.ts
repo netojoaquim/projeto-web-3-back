@@ -20,6 +20,9 @@ export class Produto {
   @Column('int', { nullable:false ,default: 0 })
   estoque: number;
 
+  @Column('int', { nullable:true ,default: 0 })
+  estoque_reservado: number;
+
   @Column({ nullable: true })
   imagem: string;
 

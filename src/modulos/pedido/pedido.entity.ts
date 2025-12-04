@@ -16,7 +16,6 @@ import { Endereco } from '../endereco/endereco.entity';
 
 
 export enum PedidoStatus {
-  ABERTO = 'ABERTO',
   AGUARDANDO_PAGAMENTO = 'AGUARDANDO_PAGAMENTO',
   PAGO = 'PAGO',
   CANCELADO = 'CANCELADO',
@@ -33,9 +32,11 @@ export class Pedido {
   @Column({
     type: 'enum',
     enum: PedidoStatus,
-    default: PedidoStatus.ABERTO,
+    default: PedidoStatus.AGUARDANDO_PAGAMENTO,
   })
   status: PedidoStatus;
+  @Column( {nullable: true })
+  motivo_cancelamento: string;
 
   @CreateDateColumn({ name: 'data_criacao' })
   dataCriacao: Date;

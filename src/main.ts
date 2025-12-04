@@ -1,5 +1,5 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestFactory,Reflector } from '@nestjs/core';
+import { ValidationPipe ,ClassSerializerInterceptor } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
@@ -8,10 +8,12 @@ process.env.TZ = 'America/Recife';
 console.log("Hora atual do NestJS:", new Date().toString());
 
 
+
 async function bootstrap() {
   
+  
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors({
