@@ -41,7 +41,7 @@ Este é um projeto de e-commerce com **backend em NestJs**.
     ```
     Isso irá:
     * Criar o container do PostgreSQL na porta `5433` (externa) `5432` (interna)
-    * Criar o container do backend na porta `5000`
+    * Criar o container do backend disponivel na porta `5000`
 
 4. **execute o projeto**
     ```ini
