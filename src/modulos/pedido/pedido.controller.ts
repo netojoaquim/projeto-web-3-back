@@ -10,9 +10,11 @@ import {
 } from '@nestjs/common';
 import { PedidoService } from './pedido.service';
 import { PedidoStatus } from './pedido.entity';
+import { UpdateStatusDto } from './dto/update-status-pedido.dto';
 import { ApiOperation,ApiTags,ApiBearerAuth } from '@nestjs/swagger';
 import { CreatePedidoDto } from './dto/create-pedido.dto';
 import { JwtAuthGuard } from 'src/modulos/auth/jwt-auth.guard';
+
 
 @ApiTags('Pedidos')
 @Controller('pedido')
@@ -38,9 +40,9 @@ export class PedidoController {
   })
   async atualizarStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { status: PedidoStatus },
+    @Body() updateStatusDto: UpdateStatusDto,
   ) {
-    return await this.pedidoService.atualizarStatus(id, body.status);
+    return await this.pedidoService.atualizarStatus(id,updateStatusDto);
   }
 
   @ApiBearerAuth()

@@ -35,6 +35,7 @@ export class Pedido {
     default: PedidoStatus.AGUARDANDO_PAGAMENTO,
   })
   status: PedidoStatus;
+  
   @Column( {nullable: true })
   motivo_cancelamento: string;
 

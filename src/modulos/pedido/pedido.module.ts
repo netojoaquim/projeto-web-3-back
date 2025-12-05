@@ -9,9 +9,11 @@ import { Cliente } from '../cliente/cliente.entity';
 import { Produto } from '../produto/produto.entity';
 import { Endereco } from '../endereco/endereco.entity';
 import { PagamentoController } from './pagamento.controller';
+import { ScheduleModule } from '@nestjs/schedule';
+
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Pedido,Pagamento,PedidoItem,Cliente,Produto,Endereco])],
+  imports: [TypeOrmModule.forFeature([Pedido,Pagamento,PedidoItem,Cliente,Produto,Endereco]),ScheduleModule.forRoot()],
   controllers: [PedidoController,PagamentoController],
   providers: [PedidoService],
   exports: [PedidoService],

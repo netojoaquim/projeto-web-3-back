@@ -1,69 +1,69 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import {Injectable,NotFoundException,BadRequestException,} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Pedido, PedidoStatus } from './pedido.entity';
 import { Cliente } from '../cliente/cliente.entity';
-import {
-  MetodoPagamento,
-  PagamentoStatus,
-  Pagamento,
-} from './pagamento.entity';
+import { MetodoPagamento, PagamentoStatus,Pagamento,} from './pagamento.entity';
 import { Produto } from '../produto/produto.entity';
 import { Endereco } from '../endereco/endereco.entity';
 import { CreatePedidoDto } from './dto/create-pedido.dto';
+import { UpdateStatusDto } from './dto/update-status-pedido.dto';
 import { PedidoItem } from './pedido-item.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { Cron } from '@nestjs/schedule';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
 @Injectable()
 export class PedidoService {
   constructor(
     @InjectRepository(Pedido)
-    private readonly pedidoRepo: Repository<Pedido>,
+    private readonly pedidoRepository: Repository<Pedido>,
 
     @InjectRepository(Cliente)
-    private readonly clienteRepo: Repository<Cliente>,
+    private readonly clienteRepository: Repository<Cliente>,
 
     @InjectRepository(Pagamento)
-    private readonly pagamentoRepo: Repository<Pagamento>,
+    private readonly pagamentoRepository: Repository<Pagamento>,
 
     @InjectRepository(PedidoItem)
-    private pedidoItemRepo: Repository<PedidoItem>,
+    private pedidoItemRepository: Repository<PedidoItem>,
 
     @InjectRepository(Produto)
-    private produtoRepo: Repository<Produto>,
+    private produtoRepository: Repository<Produto>,
 
     @InjectRepository(Endereco)
-    private enderecoRepo: Repository<Endereco>,
+    private enderecoRepository: Repository<Endereco>,
 
     private readonly mailerService: MailerService,
   ) {}
 
+  @Cron('0/5 * * * * *')
+  async testeCron() {
+    console.log('Executando tarefa agendada a 5s -', new Date());
+  }
+
   async criarPedido(dto: CreatePedidoDto) {
-    const cliente = await this.clienteRepo.findOne({
+    const cliente = await this.clienteRepository.findOne({
       where: { id: dto.userId },
     });
     if (!cliente) throw new NotFoundException('Cliente não encontrado');
 
-    const endereco = await this.enderecoRepo.findOne({
+    const endereco = await this.enderecoRepository.findOne({
       where: { id: dto.enderecoEntrega.id },
     });
     if (!endereco) throw new NotFoundException('Endereço não encontrado');
 
-    const pagamento = this.pagamentoRepo.create({
+    const pagamento = this.pagamentoRepository.create({
       metodo: dto.metodoPagamento as MetodoPagamento,
       valor: dto.total,
     });
 
-    const pedido = this.pedidoRepo.create({
+    const pedido = this.pedidoRepository.create({
       cliente,
       enderecoEntrega: endereco,
       valor: dto.total,
@@ -73,12 +73,23 @@ export class PedidoService {
     });
 
     for (const item of dto.itens) {
-      const produto = await this.produtoRepo.findOne({
+      const produto = await this.produtoRepository.findOne({
         where: { id: item.produto.id },
       });
-      if (!produto) continue;
+      if (!produto) throw new NotFoundException('Produto não encontrado');
 
-      const pedidoItem = this.pedidoItemRepo.create({
+      const quantidadeSolicitada = item.quantidade;
+      const estoqueDisponivel = produto.estoque - produto.estoque_reservado;
+
+      if (quantidadeSolicitada > estoqueDisponivel) {
+        throw new Error(
+          `Estoque insuficiente (${estoqueDisponivel}) para o produto ID ${produto.id}`,
+        );
+      }
+      produto.estoque_reservado += quantidadeSolicitada;
+      await this.produtoRepository.save(produto);
+
+      const pedidoItem = this.pedidoItemRepository.create({
         produto,
         quantidade: item.quantidade,
         valor: item.valor,
@@ -87,36 +98,37 @@ export class PedidoService {
       pedido.itens.push(pedidoItem);
     }
 
-    const saved = await this.pedidoRepo.save(pedido);
+    const saved = await this.pedidoRepository.save(pedido);
     await this.enviarEmailConfirmacao(saved, cliente);
     return saved;
   }
 
-  async atualizarStatus(pedidoId: number, status: PedidoStatus) {
-    const pedido = await this.pedidoRepo.findOne({
+  async atualizarStatus(pedidoId: number, updateStatusDto: UpdateStatusDto) {
+    const pedido = await this.pedidoRepository.findOne({
       where: { id: pedidoId },
-      relations: ['cliente','pagamento', 'itens', 'itens.produto'],
+      relations: ['cliente', 'pagamento', 'itens', 'itens.produto'],
     });
 
     if (!pedido) throw new NotFoundException('Pedido não encontrado');
 
-    pedido.status = status;
+    pedido.status = updateStatusDto.status;
 
-    if (status === PedidoStatus.PAGO) {
+    if (updateStatusDto.status === PedidoStatus.PAGO) {
       pedido.pagamento.status = PagamentoStatus.PAGO;
-      await this.pagamentoRepo.save(pedido.pagamento);
+      await this.pagamentoRepository.save(pedido.pagamento);
+
       for (const item of pedido.itens) {
         const produto = item.produto;
 
-        if (!produto) continue;
-
-        if (produto.estoque < item.quantidade) {
-          throw new BadRequestException(
-            `Estoque insuficiente para o produto ${produto.nome}`,
-          );
-        }
+        if (!produto)
+          throw new NotFoundException('Produto do item não encontrado');
 
         produto.estoque -= item.quantidade;
+
+        produto.estoque_reservado = Math.max(
+          0,
+          produto.estoque_reservado - item.quantidade,
+        );
 
         // marca como inativo se zerar
         if (produto.estoque <= 0) {
@@ -124,34 +136,54 @@ export class PedidoService {
           produto.ativo = false;
         }
 
-        await this.produtoRepo.save(produto);
+        await this.produtoRepository.save(produto);
       }
       await this.enviarEmailConfirmacaoPagamento(pedido);
-    } else if (status === PedidoStatus.CANCELADO) {
+    } else if (updateStatusDto.status === PedidoStatus.CANCELADO) {
+      if (updateStatusDto.motivo_cancelamento) {
+        pedido.motivo_cancelamento = updateStatusDto.motivo_cancelamento;
+      } else {
+        throw new BadRequestException(
+          'O motivo_cancelamento é obrigatório para cancelar o pedido.',
+        );
+      }
       pedido.pagamento.status = PagamentoStatus.CANCELADO;
-      await this.pagamentoRepo.save(pedido.pagamento);
+
+      for (const item of pedido.itens) {
+        const produto = item.produto;
+        if (!produto)
+          throw new NotFoundException('Produto do item não encontrado');
+
+        produto.estoque_reservado = Math.max(
+          0,
+          produto.estoque_reservado - item.quantidade,
+        );
+
+        await this.produtoRepository.save(produto);
+      }
+      await this.pagamentoRepository.save(pedido.pagamento);
 
       await this.enviarEmailCancelamento(pedido);
     }
 
-    return await this.pedidoRepo.save(pedido);
+    return await this.pedidoRepository.save(pedido);
   }
 
   async listarPorCliente(clienteId: number) {
-    return await this.pedidoRepo.find({
+    return await this.pedidoRepository.find({
       where: { cliente: { id: clienteId } },
       order: { dataCriacao: 'DESC' },
     });
   }
 
   async listarTodos() {
-    return await this.pedidoRepo.find({
+    return await this.pedidoRepository.find({
       order: { dataCriacao: 'DESC' },
     });
   }
 
   async buscarPorId(id: number) {
-    const pedido = await this.pedidoRepo.findOne({
+    const pedido = await this.pedidoRepository.findOne({
       where: { id },
     });
 
@@ -164,7 +196,7 @@ export class PedidoService {
     id: number,
     body: { status?: PedidoStatus; valor?: number; metodoPagamento?: string },
   ) {
-    const pedido = await this.pedidoRepo.findOne({
+    const pedido = await this.pedidoRepository.findOne({
       where: { id },
       relations: ['pagamento'],
     });
@@ -180,12 +212,12 @@ export class PedidoService {
     // Atualiza método de pagamento se informado
     if (body.metodoPagamento && pedido.pagamento) {
       pedido.pagamento.metodo = body.metodoPagamento as any;
-      await this.pagamentoRepo.save(pedido.pagamento);
+      await this.pagamentoRepository.save(pedido.pagamento);
     }
 
     pedido.dataModificacao = new Date();
 
-    return await this.pedidoRepo.save(pedido);
+    return await this.pedidoRepository.save(pedido);
   }
   private async enviarEmailConfirmacao(pedido: Pedido, cliente: Cliente) {
     const agoraRecife = dayjs().tz('America/Recife');
@@ -218,7 +250,6 @@ export class PedidoService {
         },
       });
       console.log('Enviando e-mail de confirmação para:', cliente.email);
-
     } catch (error) {
       console.error('Erro ao enviar email de confirmação:', error);
     }
