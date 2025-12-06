@@ -30,22 +30,14 @@ export class PagamentoService {
     pagamentoId: number,
     status: PagamentoStatus,
   ): Promise<Pagamento> {
-    console.log('🔍 [PagamentoService] Update solicitado:', {
-      pagamentoId,
-      status,
-    });
 
     const update = await this.pagamentoRepository.findOne({
       where: { id: pagamentoId },
     });
 
     if (!update) {
-      console.error('❌ Pagamento não encontrado:', pagamentoId);
-      throw new NotFoundException(
-        `Pagamento ID ${pagamentoId} não encontrado.`,
-      );
+      throw new NotFoundException(`Pagamento ID ${pagamentoId} não encontrado.`);
     }
-    console.log('📌 Antes do update:', update);
     update.status = status;
     update.dataAtualizacao = new Date();
 

@@ -42,14 +42,12 @@ export class PedidoService {
   ) {}
 
   async criarPedido(dto: CreatePedidoDto) {
-    // Cria o QueryRunner para controlar a transação
     const queryRunner =
       this.pedidoRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // 1️⃣ Busca cliente e endereço
       const cliente = await queryRunner.manager.findOne(Cliente, {
         where: { id: dto.userId },
       });
@@ -65,7 +63,6 @@ export class PedidoService {
         dto.total,
       );
 
-      // 3️⃣ Cria pedido
       const pedido = queryRunner.manager.create(Pedido, {
         cliente,
         enderecoEntrega: endereco,
@@ -75,7 +72,6 @@ export class PedidoService {
         itens: [],
       });
 
-      // 4️⃣ Processa itens do pedido
       for (const item of dto.itens) {
         const produto = await queryRunner.manager.findOne(Produto, {
           where: { id: item.produto.id },
@@ -106,22 +102,17 @@ export class PedidoService {
         pedido.itens.push(pedidoItem);
       }
 
-      // 5️⃣ Salva pedido (junto com itens)
       await queryRunner.manager.save(pedido);
 
-      // 6️⃣ Commit da transação
       await queryRunner.commitTransaction();
 
-      // 7️⃣ Envia email fora da transação
       await this.enviarEmailConfirmacao(pedido, cliente);
 
       return pedido;
     } catch (error) {
-      // Se houver erro, desfaz tudo
       await queryRunner.rollbackTransaction();
       throw error;
     } finally {
-      // Libera o queryRunner
       await queryRunner.release();
     }
   }
