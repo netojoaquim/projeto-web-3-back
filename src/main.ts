@@ -1,17 +1,17 @@
 import { NestFactory,Reflector } from '@nestjs/core';
-import { ValidationPipe ,ClassSerializerInterceptor } from '@nestjs/common';
+import { ValidationPipe ,ClassSerializerInterceptor,Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 process.env.TZ = 'America/Recife';
-console.log("Hora atual do NestJS:", new Date().toString());
+const logger = new Logger('Bootstrap');
+logger.log("Hora atual do NestJS: "+ new Date().toString());
 
 
 
 async function bootstrap() {
-  
-  
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.useGlobalPipes(new ValidationPipe());

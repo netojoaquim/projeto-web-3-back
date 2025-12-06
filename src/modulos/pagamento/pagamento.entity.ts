@@ -13,13 +13,13 @@ export enum PagamentoStatus {
   PAGO = 'PAGO',
   CANCELADO = 'CANCELADO',
   ANULADO = 'ANULADO',
+  FALHA = 'FALHA',
 }
 export enum MetodoPagamento {
   CARTAO = 'CARTAO',
   BOLETO = 'BOLETO',
   PIX = 'PIX',
 }
-
 
 @Entity('pagamentos')
 export class Pagamento {

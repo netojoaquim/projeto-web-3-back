@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Pedido, PedidoStatus } from './pedido.entity';
 import { Cliente } from '../cliente/cliente.entity';
-import { MetodoPagamento, PagamentoStatus,Pagamento,} from './pagamento.entity';
+import { MetodoPagamento, PagamentoStatus} from '../pagamento/pagamento.entity';
+import { PagamentoService } from '../pagamento/pagamento.service';
 import { Produto } from '../produto/produto.entity';
 import { Endereco } from '../endereco/endereco.entity';
 import { CreatePedidoDto } from './dto/create-pedido.dto';
@@ -13,7 +14,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { Cron } from '@nestjs/schedule';
+
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -27,9 +28,6 @@ export class PedidoService {
     @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
 
-    @InjectRepository(Pagamento)
-    private readonly pagamentoRepository: Repository<Pagamento>,
-
     @InjectRepository(PedidoItem)
     private pedidoItemRepository: Repository<PedidoItem>,
 
@@ -40,71 +38,101 @@ export class PedidoService {
     private enderecoRepository: Repository<Endereco>,
 
     private readonly mailerService: MailerService,
+    private readonly pagamentoService: PagamentoService,
   ) {}
 
-  @Cron('0/5 * * * * *')
-  async testeCron() {
-    console.log('Executando tarefa agendada a 5s -', new Date());
-  }
-
   async criarPedido(dto: CreatePedidoDto) {
-    const cliente = await this.clienteRepository.findOne({
-      where: { id: dto.userId },
-    });
-    if (!cliente) throw new NotFoundException('Cliente não encontrado');
+    // Cria o QueryRunner para controlar a transação
+    const queryRunner =
+      this.pedidoRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const endereco = await this.enderecoRepository.findOne({
-      where: { id: dto.enderecoEntrega.id },
-    });
-    if (!endereco) throw new NotFoundException('Endereço não encontrado');
-
-    const pagamento = this.pagamentoRepository.create({
-      metodo: dto.metodoPagamento as MetodoPagamento,
-      valor: dto.total,
-    });
-
-    const pedido = this.pedidoRepository.create({
-      cliente,
-      enderecoEntrega: endereco,
-      valor: dto.total,
-      status: PedidoStatus.AGUARDANDO_PAGAMENTO,
-      pagamento,
-      itens: [],
-    });
-
-    for (const item of dto.itens) {
-      const produto = await this.produtoRepository.findOne({
-        where: { id: item.produto.id },
+    try {
+      // 1️⃣ Busca cliente e endereço
+      const cliente = await queryRunner.manager.findOne(Cliente, {
+        where: { id: dto.userId },
       });
-      if (!produto) throw new NotFoundException('Produto não encontrado');
+      if (!cliente) throw new NotFoundException('Cliente não encontrado');
 
-      const quantidadeSolicitada = item.quantidade;
-      const estoqueDisponivel = produto.estoque - produto.estoque_reservado;
+      const endereco = await queryRunner.manager.findOne(Endereco, {
+        where: { id: dto.enderecoEntrega.id },
+      });
+      if (!endereco) throw new NotFoundException('Endereço não encontrado');
 
-      if (quantidadeSolicitada > estoqueDisponivel) {
-        throw new Error(
-          `Estoque insuficiente (${estoqueDisponivel}) para o produto ID ${produto.id}`,
-        );
+      const pagamento = await this.pagamentoService.criarPagamento(
+        dto.metodoPagamento as MetodoPagamento,
+        dto.total,
+      );
+
+      // 3️⃣ Cria pedido
+      const pedido = queryRunner.manager.create(Pedido, {
+        cliente,
+        enderecoEntrega: endereco,
+        valor: dto.total,
+        status: PedidoStatus.AGUARDANDO_PAGAMENTO,
+        pagamento,
+        itens: [],
+      });
+
+      // 4️⃣ Processa itens do pedido
+      for (const item of dto.itens) {
+        const produto = await queryRunner.manager.findOne(Produto, {
+          where: { id: item.produto.id },
+        });
+        if (!produto)
+          throw new NotFoundException(
+            `Produto ID ${item.produto.id} não encontrado`,
+          );
+
+        const quantidadeSolicitada = item.quantidade;
+        const estoqueDisponivel = produto.estoque - produto.estoque_reservado;
+
+        if (quantidadeSolicitada > estoqueDisponivel) {
+          throw new BadRequestException(
+            `Estoque insuficiente (${estoqueDisponivel}) para o produto ID ${produto.id}`,
+          );
+        }
+
+        produto.estoque_reservado += quantidadeSolicitada;
+        await queryRunner.manager.save(produto);
+
+        const pedidoItem = queryRunner.manager.create(PedidoItem, {
+          produto,
+          quantidade: item.quantidade,
+          valor: item.valor,
+        });
+
+        pedido.itens.push(pedidoItem);
       }
-      produto.estoque_reservado += quantidadeSolicitada;
-      await this.produtoRepository.save(produto);
 
-      const pedidoItem = this.pedidoItemRepository.create({
-        produto,
-        quantidade: item.quantidade,
-        valor: item.valor,
-      });
+      // 5️⃣ Salva pedido (junto com itens)
+      await queryRunner.manager.save(pedido);
 
-      pedido.itens.push(pedidoItem);
+      // 6️⃣ Commit da transação
+      await queryRunner.commitTransaction();
+
+      // 7️⃣ Envia email fora da transação
+      await this.enviarEmailConfirmacao(pedido, cliente);
+
+      return pedido;
+    } catch (error) {
+      // Se houver erro, desfaz tudo
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Libera o queryRunner
+      await queryRunner.release();
     }
-
-    const saved = await this.pedidoRepository.save(pedido);
-    await this.enviarEmailConfirmacao(saved, cliente);
-    return saved;
   }
 
   async atualizarStatus(pedidoId: number, updateStatusDto: UpdateStatusDto) {
-    const pedido = await this.pedidoRepository.findOne({
+  const queryRunner = this.pedidoRepository.manager.connection.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  try {
+    const pedido = await queryRunner.manager.findOne(Pedido, {
       where: { id: pedidoId },
       relations: ['cliente', 'pagamento', 'itens', 'itens.produto'],
     });
@@ -114,60 +142,67 @@ export class PedidoService {
     pedido.status = updateStatusDto.status;
 
     if (updateStatusDto.status === PedidoStatus.PAGO) {
+      if (!pedido.pagamento?.id) throw new BadRequestException('Pagamento não associado ao pedido.');
+
+      // Atualiza o pagamento usando o mesmo queryRunner
       pedido.pagamento.status = PagamentoStatus.PAGO;
-      await this.pagamentoRepository.save(pedido.pagamento);
+      pedido.pagamento.dataAtualizacao = new Date();
+      await queryRunner.manager.save(pedido.pagamento);
 
       for (const item of pedido.itens) {
         const produto = item.produto;
-
-        if (!produto)
-          throw new NotFoundException('Produto do item não encontrado');
+        if (!produto) throw new NotFoundException('Produto do item não encontrado');
 
         produto.estoque -= item.quantidade;
+        produto.estoque_reservado = Math.max(0, produto.estoque_reservado - item.quantidade);
+        if (produto.estoque <= 0) produto.ativo = false;
 
-        produto.estoque_reservado = Math.max(
-          0,
-          produto.estoque_reservado - item.quantidade,
-        );
-
-        // marca como inativo se zerar
-        if (produto.estoque <= 0) {
-          produto.estoque = 0;
-          produto.ativo = false;
-        }
-
-        await this.produtoRepository.save(produto);
+        await queryRunner.manager.save(produto);
       }
+
+      await queryRunner.manager.save(pedido);
+      await queryRunner.commitTransaction();
+
+      // Emails fora da transação
       await this.enviarEmailConfirmacaoPagamento(pedido);
-    } else if (updateStatusDto.status === PedidoStatus.CANCELADO) {
-      if (updateStatusDto.motivo_cancelamento) {
-        pedido.motivo_cancelamento = updateStatusDto.motivo_cancelamento;
-      } else {
-        throw new BadRequestException(
-          'O motivo_cancelamento é obrigatório para cancelar o pedido.',
-        );
-      }
-      pedido.pagamento.status = PagamentoStatus.CANCELADO;
 
+    } else if (updateStatusDto.status === PedidoStatus.CANCELADO) {
+      if (!updateStatusDto.motivo_cancelamento) {
+        throw new BadRequestException('O motivo_cancelamento é obrigatório para cancelar o pedido.');
+      }
+      pedido.motivo_cancelamento = updateStatusDto.motivo_cancelamento;
+
+      // Reverte estoque reservado
       for (const item of pedido.itens) {
         const produto = item.produto;
-        if (!produto)
-          throw new NotFoundException('Produto do item não encontrado');
+        if (!produto) throw new NotFoundException('Produto do item não encontrado');
 
-        produto.estoque_reservado = Math.max(
-          0,
-          produto.estoque_reservado - item.quantidade,
-        );
-
-        await this.produtoRepository.save(produto);
+        produto.estoque_reservado = Math.max(0, produto.estoque_reservado - item.quantidade);
+        await queryRunner.manager.save(produto);
       }
-      await this.pagamentoRepository.save(pedido.pagamento);
 
+      // Atualiza pagamento dentro da transação
+      if (!pedido.pagamento?.id) throw new BadRequestException('Pagamento não associado ao pedido.');
+      pedido.pagamento.status = PagamentoStatus.CANCELADO;
+      pedido.pagamento.dataAtualizacao = new Date();
+      await queryRunner.manager.save(pedido.pagamento);
+
+      await queryRunner.manager.save(pedido);
+      await queryRunner.commitTransaction();
+
+      // Emails fora da transação
       await this.enviarEmailCancelamento(pedido);
     }
 
-    return await this.pedidoRepository.save(pedido);
+    return pedido;
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    throw error;
+  } finally {
+    await queryRunner.release();
   }
+}
+
 
   async listarPorCliente(clienteId: number) {
     return await this.pedidoRepository.find({
@@ -196,28 +231,40 @@ export class PedidoService {
     id: number,
     body: { status?: PedidoStatus; valor?: number; metodoPagamento?: string },
   ) {
-    const pedido = await this.pedidoRepository.findOne({
-      where: { id },
-      relations: ['pagamento'],
-    });
+    const queryRunner = this.pedidoRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (!pedido) {
-      throw new NotFoundException('Pedido não encontrado');
+    try {
+      const pedido = await queryRunner.manager.findOne(Pedido, {
+        where: { id },
+        relations: ['pagamento'],
+      });
+
+      if (!pedido) throw new NotFoundException('Pedido não encontrado');
+
+      if (body.status) pedido.status = body.status;
+      if (body.valor) pedido.valor = body.valor;
+
+      if (body.metodoPagamento && pedido.pagamento) {
+        pedido.pagamento= await this.pagamentoService.atualizarMetodo(
+          pedido.pagamento.id,
+          body.metodoPagamento as MetodoPagamento);
+      }
+
+      pedido.dataModificacao = new Date();
+
+      await queryRunner.manager.save(pedido);
+
+      await queryRunner.commitTransaction();
+
+      return pedido;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-
-    // Atualiza os campos do pedido
-    if (body.status) pedido.status = body.status;
-    if (body.valor) pedido.valor = body.valor;
-
-    // Atualiza método de pagamento se informado
-    if (body.metodoPagamento && pedido.pagamento) {
-      pedido.pagamento.metodo = body.metodoPagamento as any;
-      await this.pagamentoRepository.save(pedido.pagamento);
-    }
-
-    pedido.dataModificacao = new Date();
-
-    return await this.pedidoRepository.save(pedido);
   }
   private async enviarEmailConfirmacao(pedido: Pedido, cliente: Cliente) {
     const agoraRecife = dayjs().tz('America/Recife');

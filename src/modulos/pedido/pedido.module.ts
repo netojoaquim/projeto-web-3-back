@@ -3,19 +3,34 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Pedido } from './pedido.entity';
 import { PedidoService } from './pedido.service';
 import { PedidoController } from './pedido.controller';
-import { Pagamento } from './pagamento.entity';
 import { PedidoItem } from './pedido-item.entity';
 import { Cliente } from '../cliente/cliente.entity';
 import { Produto } from '../produto/produto.entity';
 import { Endereco } from '../endereco/endereco.entity';
-import { PagamentoController } from './pagamento.controller';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TimeoutSchedulerService } from './verifica-pedido';
+import { ConfigModule } from '@nestjs/config';
+import { Pagamento } from '../pagamento/pagamento.entity';
+import { PagamentoModule } from '../pagamento/pagamento.module';
+
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Pedido,Pagamento,PedidoItem,Cliente,Produto,Endereco]),ScheduleModule.forRoot()],
-  controllers: [PedidoController,PagamentoController],
-  providers: [PedidoService],
+  imports: [ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forFeature([
+      Pedido,
+      PedidoItem,
+      Cliente,
+      Produto,
+      Endereco,
+    ]),
+      ScheduleModule.forRoot(),
+    PagamentoModule,
+  ],
+  controllers: [PedidoController],
+  providers: [PedidoService,/*TimeoutSchedulerService*/],
   exports: [PedidoService],
 })
 export class PedidoModule {}

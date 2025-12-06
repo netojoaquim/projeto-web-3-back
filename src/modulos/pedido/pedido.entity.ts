@@ -10,7 +10,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Cliente } from '../cliente/cliente.entity';
-import { Pagamento } from '../pedido/pagamento.entity';
+import { Pagamento } from '../pagamento/pagamento.entity';
 import { PedidoItem } from './pedido-item.entity';
 import { Endereco } from '../endereco/endereco.entity';
 
@@ -35,7 +35,7 @@ export class Pedido {
     default: PedidoStatus.AGUARDANDO_PAGAMENTO,
   })
   status: PedidoStatus;
-  
+
   @Column( {nullable: true })
   motivo_cancelamento: string;
 
@@ -59,7 +59,7 @@ export class Pedido {
     cascade: true,
     eager: true,
   })
-  @JoinColumn()
+  @JoinColumn({ name: 'pagamentoId' })
   pagamento: Pagamento;
 
 }

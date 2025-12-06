@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule} from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClienteModule } from './modulos/cliente/cliente.module';
 import { AuthModule } from './modulos/auth/auth.module';
-import { ConfigModule,ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EnderecoModule } from './modulos/endereco/endereco.module';
 import { CategoriaModule } from './modulos/categoria/categoria.module';
 import { ProdutoModule } from './modulos/produto/produto.module';
 import { CarrinhoModule } from './modulos/carrinho/carrinho.module';
-import { CarrinhoItem } from './modulos/carrinho/carrinho-item.entity';
 import { PedidoModule } from './modulos/pedido/pedido.module';
+import { PagamentoModule } from './modulos/pagamento/pagamento.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
@@ -23,22 +23,42 @@ import { join } from 'path';
     CategoriaModule,
     ProdutoModule,
     CarrinhoModule,
-    CarrinhoItem,
     PedidoModule,
+    PagamentoModule,
+
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST||'localhost',
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      entities: [__dirname + '/modulos/**/*.entity{.ts,.js}'],
-      //logging: true,
-      synchronize: true,
+
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        
+        // 🔍 LOG AQUI — MOSTRA A CONFIG DE CONEXÃO
+        console.log('🔍 Conectando ao banco:', {
+          host: configService.get<string>('DB_HOST'),
+          port: configService.get<number>('DB_PORT'),
+          user: configService.get<string>('DB_USERNAME'),
+          database: configService.get<string>('DB_NAME'),
+        });
+
+        return {
+          type: 'postgres',
+          host: configService.get<string>('DB_HOST'),
+          port: configService.get<number>('DB_PORT'),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_NAME'),
+          entities: [__dirname + '/modulos/**/*.entity{.ts,.js}'],
+          synchronize: true,
+          extra: {
+            options: '-c timezone=America/Recife',
+          },
+        };
+      },
+      inject: [ConfigService],
     }),
+
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -51,14 +71,12 @@ import { join } from 'path';
             user: config.get<string>('MAIL_USER'),
             pass: config.get<string>('MAIL_PASSWORD'),
           },
-          //logger: true,
-          //debug: true,
         },
         defaults: {
           from: config.get<string>('MAIL_FROM'),
         },
         template: {
-          dir: join(__dirname, '..','src','templates'),
+          dir: join(__dirname, '..', 'src', 'templates'),
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
