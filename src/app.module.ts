@@ -14,6 +14,7 @@ import { PagamentoModule } from './modulos/pagamento/pagamento.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
+import { FreteModule } from './modulos/frete/frete.module';
 
 @Module({
   imports: [
@@ -33,15 +34,6 @@ import { join } from 'path';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
-        
-        // 🔍 LOG AQUI — MOSTRA A CONFIG DE CONEXÃO
-        console.log('🔍 Conectando ao banco:', {
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          user: configService.get<string>('DB_USERNAME'),
-          database: configService.get<string>('DB_NAME'),
-        });
-
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST'),
@@ -84,6 +76,8 @@ import { join } from 'path';
         },
       }),
     }),
+
+    FreteModule,
   ],
   controllers: [AppController],
   providers: [AppService],
