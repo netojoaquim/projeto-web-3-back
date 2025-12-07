@@ -24,6 +24,9 @@ Este é um projeto de e-commerce com **backend em NestJs**.
     #tempo para redefinicao de senha
     MIN_INTERVAL_MS=20
 
+    #tempo de intervalo da função de liberar pedidos reservados
+    PEDIDO_TIMEOUT_MINUTOS=1
+
     #configuração envio emails
     MAIL_HOST=smtp.gmail.com
     MAIL_PORT=465
