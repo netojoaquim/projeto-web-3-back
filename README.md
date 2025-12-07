@@ -56,3 +56,4 @@ Este é um projeto de e-commerce com **backend em NestJs**.
     ```
 
 * **Backend:** `http://localhost:5000`
+* **Documentação Swagger:** `http://localhost:5000/api`
