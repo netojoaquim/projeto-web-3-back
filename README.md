@@ -14,7 +14,7 @@ Este é um projeto de e-commerce com **backend em NestJs**.
 2.  **Crie o arquivo `.env` para o backend** (se necessário) com as variáveis de ambiente adequadas:
     ```ini
 
-    JWT_SECRET=<>
+    JWT_SECRET=
     DB_HOST=localhost
     DB_PORT=5432
     DB_USERNAME=postgres
@@ -29,10 +29,14 @@ Este é um projeto de e-commerce com **backend em NestJs**.
     MAIL_PORT=465
     MAIL_SECURE=true
     MAIL_USER=<email>
-    MAIL_PASSWORD=qtvi jbxf uhoh abcd #recriar senha de app
+    MAIL_PASSWORD=qtvi jbxf uhoh abcd #criar uma senha de app
     MAIL_FROM="Guarashop <email>"
     #horario
     TZ=America/Recife
+
+    #frete
+    MELHOR_ENVIO_TOKEN=    #token da plataforma melhor envio
+    CEP_ORIGEM=          #cep da origem do frete para o cep do cadastro do cliente
 
     ```
 3.  **Suba o container com Docker Compose:**

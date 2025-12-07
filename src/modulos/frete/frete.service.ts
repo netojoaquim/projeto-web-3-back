@@ -45,7 +45,8 @@ export class FreteService {
           empresa: opt.company.name,
         }));
 
-      return resultado; // JSON da cotação
+      return resultado;
+
     } catch (error) {
       console.error(
         'Erro ao cotar frete via Melhor Envio:',
