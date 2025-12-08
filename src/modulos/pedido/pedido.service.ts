@@ -332,6 +332,7 @@ export class PedidoService {
           valorTotal: Number(pedido.valor ?? 0).toFixed(2),
           date: data,
           time: hora,
+          motivo: pedido.motivo_cancelamento,
         },
       });
     } catch (error) {

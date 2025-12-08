@@ -42,7 +42,6 @@ export class PagamentoService {
     update.dataAtualizacao = new Date();
 
     const atualizado = await this.pagamentoRepository.save(update);
-    console.log('✅ Pagamento salvo no banco:', atualizado);
 
     return atualizado;
   }
