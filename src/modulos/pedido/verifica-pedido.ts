@@ -4,23 +4,24 @@ import { Repository, LessThan } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Pedido, PedidoStatus } from './pedido.entity';
-import { Produto } from '../produto/produto.entity';
 import { PagamentoStatus} from '../pagamento/pagamento.entity';
 import { red, magenta } from 'colorette';
+import { PedidoService } from './pedido.service';
+import { PagamentoService } from '../pagamento/pagamento.service';
 
 
 @Injectable()
-export class TimeoutSchedulerService  {
+export class VerificaPedidosExpirados  {
 
 
-  private readonly logger = new Logger(TimeoutSchedulerService.name);
+  private readonly logger = new Logger(VerificaPedidosExpirados.name);
   private readonly tempo_limite: number;
 
   constructor(
     @InjectRepository(Pedido)
     private readonly pedidoRepository: Repository<Pedido>,
-    @InjectRepository(Produto)
-    private readonly produtoRepository: Repository<Produto>,
+    private readonly pagamentoService: PagamentoService,
+    private readonly pedidoService: PedidoService,
     private readonly configService: ConfigService,
   ) {
     this.tempo_limite=Number(this.configService.get('PEDIDO_TIMEOUT_MINUTOS'));
@@ -40,7 +41,7 @@ export class TimeoutSchedulerService  {
         status: PedidoStatus.AGUARDANDO_PAGAMENTO,
         dataCriacao: LessThan(limiteData),
       },
-      relations: ['itens', 'itens.produto'],
+      relations: ['itens', 'itens.produto', 'pagamento'],
     });
 
     if (pedidosExpirados.length === 0) {
@@ -62,27 +63,18 @@ export class TimeoutSchedulerService  {
   private async liberarEstoqueECancelarPedido(pedido: Pedido): Promise<void> {
     try {
 
-      for (const item of pedido.itens) {
-        const produto = item.produto;
-
-        if (produto) console.log('[CRON JOB] Produto encontrado:', produto.id);
-        if (!produto) continue;
-
-
-        produto.estoque_reservado = Math.max(
-          0,
-          produto.estoque_reservado - item.quantidade,
+      if (pedido.pagamento?.id) {
+        await this.pagamentoService.atualizarPagamento(
+          pedido.pagamento.id,
+          PagamentoStatus.CANCELADO,
         );
-
-        await this.produtoRepository.save(produto);
       }
-
-      pedido.status = PedidoStatus.CANCELADO;
-      pedido.motivo_cancelamento = 'Pagamento não finalizado (cancelamento automático)';
-      pedido.pagamento.status = PagamentoStatus.ANULADO;
-      await this.pedidoRepository.save(pedido);
-
+      await this.pedidoService.atualizarStatus(pedido.id,{
+        status: PedidoStatus.CANCELADO,
+        motivo_cancelamento: 'Pagamento não finalizado (cancelamento automático)',
+      });
       this.logger.log(magenta(`[CRON JOB] PEDIDO ${pedido.id} CANCELADO E ESTOQUE LIBERADO.`));
+
     } catch (error) {
       this.logger.error(red(
         `[CRON JOB ERRO] Falha ao processar o pedido ${pedido.id}: ${error.message}`,

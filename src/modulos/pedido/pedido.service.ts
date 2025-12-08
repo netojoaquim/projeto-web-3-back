@@ -25,17 +25,17 @@ export class PedidoService {
     @InjectRepository(Pedido)
     private readonly pedidoRepository: Repository<Pedido>,
 
-    @InjectRepository(Cliente)
-    private readonly clienteRepository: Repository<Cliente>,
+    // @InjectRepository(Cliente)
+    // private readonly clienteRepository: Repository<Cliente>,
 
-    @InjectRepository(PedidoItem)
-    private pedidoItemRepository: Repository<PedidoItem>,
+    // @InjectRepository(PedidoItem)
+    // private pedidoItemRepository: Repository<PedidoItem>,
 
-    @InjectRepository(Produto)
-    private produtoRepository: Repository<Produto>,
+    // @InjectRepository(Produto)
+    // private produtoRepository: Repository<Produto>,
 
-    @InjectRepository(Endereco)
-    private enderecoRepository: Repository<Endereco>,
+    // @InjectRepository(Endereco)
+    // private enderecoRepository: Repository<Endereco>,
 
     private readonly mailerService: MailerService,
     private readonly pagamentoService: PagamentoService,

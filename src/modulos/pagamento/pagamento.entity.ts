@@ -12,7 +12,6 @@ export enum PagamentoStatus {
   PENDENTE = 'PENDENTE',
   PAGO = 'PAGO',
   CANCELADO = 'CANCELADO',
-  ANULADO = 'ANULADO',
   FALHA = 'FALHA',
 }
 export enum MetodoPagamento {

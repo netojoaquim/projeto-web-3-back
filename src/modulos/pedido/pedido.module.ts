@@ -8,7 +8,7 @@ import { Cliente } from '../cliente/cliente.entity';
 import { Produto } from '../produto/produto.entity';
 import { Endereco } from '../endereco/endereco.entity';
 import { ScheduleModule } from '@nestjs/schedule';
-import { TimeoutSchedulerService } from './verifica-pedido';
+import { VerificaPedidosExpirados } from './verifica-pedido';
 import { ConfigModule } from '@nestjs/config';
 import { Pagamento } from '../pagamento/pagamento.entity';
 import { PagamentoModule } from '../pagamento/pagamento.module';
@@ -30,7 +30,7 @@ import { PagamentoModule } from '../pagamento/pagamento.module';
     PagamentoModule,
   ],
   controllers: [PedidoController],
-  providers: [PedidoService,/*TimeoutSchedulerService*/],
+  providers: [PedidoService,VerificaPedidosExpirados],
   exports: [PedidoService],
 })
 export class PedidoModule {}
