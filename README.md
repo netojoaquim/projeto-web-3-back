@@ -42,7 +42,11 @@ Este é um projeto de e-commerce com **backend em NestJs**.
     CEP_ORIGEM=          #cep da origem do frete para o cep do cadastro do cliente
 
     ```
-3.  **Suba o container com Docker Compose:**
+3. **Instale as dependências  do projeto**
+    ```ini
+    npm i
+    ```
+4.  **Suba o container com Docker Compose:**
     ```bash
     docker-compose up --build
     ```
@@ -50,7 +54,7 @@ Este é um projeto de e-commerce com **backend em NestJs**.
     * Criar o container do PostgreSQL na porta `5433` (externa) `5432` (interna)
     * Criar o container do backend disponivel na porta `5000`
 
-4. **execute o projeto**
+5. **execute o projeto**
     ```ini
     npm run start
     ```
