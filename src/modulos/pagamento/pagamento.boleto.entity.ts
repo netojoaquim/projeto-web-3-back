@@ -10,7 +10,7 @@ export class PagamentoBoleto  {
   @Column({nullable:true})
   codigoBarras: string;
 
-  @Column( {type: 'timestamp', nullable:true})
+  @Column( {nullable:true})
   dataVencimento: string;
 
   @OneToOne(() => Pagamento, { onDelete: 'CASCADE' })

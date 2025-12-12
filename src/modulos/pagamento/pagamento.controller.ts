@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Body,UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation,ApiBearerAuth } from '@nestjs/swagger';
 import { MetodoPagamento } from './pagamento.entity';
 import { PagamentoService } from './pagamento.service';
+import { JwtAuthGuard } from 'src/modulos/auth/jwt-auth.guard';
+
 
 interface CriarPagamentoDto {
     metodo: MetodoPagamento;
@@ -23,13 +25,15 @@ interface CriarPagamentoDto {
 @Controller('pagamento')
 export class PagamentoController {
   constructor(private readonly pagamentoService: PagamentoService) {}
-
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get('metodos')
   @ApiOperation({ summary: 'Lista os métodos de pagamento disponíveis' })
   listarMetodosPagamento() {
     return Object.values(MetodoPagamento);
   }
-
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Post()
   async criar(@Body() dto: CriarPagamentoDto) {
     return this.pagamentoService.criarPagamento(dto);

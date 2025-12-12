@@ -15,6 +15,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { FreteModule } from './modulos/frete/frete.module';
+import { SeedModule } from './modulos/seeds/seeds.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { FreteModule } from './modulos/frete/frete.module';
     CarrinhoModule,
     PedidoModule,
     PagamentoModule,
+    SeedModule,
 
     ConfigModule.forRoot({
       isGlobal: true,

@@ -39,7 +39,7 @@ export class VerificaPedidosExpirados  {
     const pedidosExpirados = await this.pedidoRepository.find({
       where: {
         status: PedidoStatus.AGUARDANDO_PAGAMENTO,
-        dataCriacao: LessThan(limiteData),
+        dataModificacao: LessThan(limiteData),
       },
       relations: ['itens', 'itens.produto', 'pagamento'],
     });

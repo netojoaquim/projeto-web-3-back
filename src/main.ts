@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { SeedService } from './modulos/seeds/seeds.service';
 process.env.TZ = 'America/Recife';
 const logger = new Logger('Bootstrap');
 logger.log("Hora atual do NestJS: "+ new Date().toString());
@@ -35,6 +36,10 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  const seedService = app.get(SeedService);
+  await seedService.run();
+  
 
   await app.listen(process.env.PORT ?? 5000);
 }

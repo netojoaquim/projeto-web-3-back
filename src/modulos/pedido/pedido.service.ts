@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -69,15 +70,16 @@ export class PedidoService {
 
         metodo: dto.metodoPagamento as MetodoPagamento,
         valor: dto.total,
+
         ...(dto as any),
       });
       await queryRunner.manager.save(pagamentoDetalhado.pagamento);
 
-      //salvar o detalhado
+      // 3. Agora salvar o detalhado
       const pagamentoDetalhadoSalvo =
         await queryRunner.manager.save(pagamentoDetalhado);
 
-      // pagamento base salvo
+      // 4. Extrair o pagamento base salvo
       const pagamentoBase = pagamentoDetalhadoSalvo.pagamento;
 
       if (!pagamentoBase) {
@@ -103,6 +105,11 @@ export class PedidoService {
           throw new NotFoundException(
             `Produto ID ${item.produto.id} não encontrado`,
           );
+        if (!produto.ativo) {
+          throw new BadRequestException(
+            `Produto ${produto.id} - ${produto.nome} está inativo e não pode ser pedido.`,
+          );
+        }
 
         const quantidadeSolicitada = item.quantidade;
         const estoqueDisponivel = produto.estoque - produto.estoque_reservado;
@@ -154,6 +161,10 @@ export class PedidoService {
 
       if (!pedido) throw new NotFoundException('Pedido não encontrado');
 
+      if (pedido.status !==PedidoStatus.AGUARDANDO_PAGAMENTO){
+        throw new ConflictException('Só é possível atualizar pedidos que estão com status AGUARDANDO_PAGAMENTO.');
+      } ;
+
       const statusAnterior = pedido.status;
       pedido.status = updateStatusDto.status;
 
@@ -165,10 +176,11 @@ export class PedidoService {
         if (!pedido.pagamento?.id)
           throw new BadRequestException('Pagamento não associado ao pedido.');
 
+        // Atualiza o pagamento usando o mesmo queryRunner
         await this.pagamentoService.atualizarStatusPagamento(
           pedido.pagamento.id,
           PagamentoStatus.PAGO,
-          queryRunner,
+          queryRunner, // Passa a transação atual
         );
         pedido.pagamento.dataAtualizacao = new Date();
         await queryRunner.manager.save(pedido.pagamento);
@@ -193,7 +205,7 @@ export class PedidoService {
         await queryRunner.manager.save(pedido);
         await queryRunner.commitTransaction();
 
-
+        // Emails fora da transação
         await this.enviarEmailConfirmacaoPagamento(pedido);
       } else if (updateStatusDto.status === PedidoStatus.CANCELADO) {
         if (!updateStatusDto.motivo_cancelamento) {
@@ -203,6 +215,7 @@ export class PedidoService {
         }
         pedido.motivo_cancelamento = updateStatusDto.motivo_cancelamento;
 
+        // Reverte estoque reservado
         for (const item of pedido.itens) {
           const produto = item.produto;
           if (!produto)
@@ -215,6 +228,7 @@ export class PedidoService {
           await queryRunner.manager.save(produto);
         }
 
+        // Atualiza pagamento dentro da transação
         if (!pedido.pagamento?.id)
           throw new BadRequestException('Pagamento não associado ao pedido.');
 
@@ -225,7 +239,7 @@ export class PedidoService {
         await this.pagamentoService.atualizarStatusPagamento(
           pedido.pagamento.id,
           PagamentoStatus.CANCELADO,
-          queryRunner,
+          queryRunner, // Passa a transação atual
         );
         pedido.pagamento.dataAtualizacao = new Date();
         await queryRunner.manager.save(pedido.pagamento);
@@ -233,6 +247,7 @@ export class PedidoService {
         await queryRunner.manager.save(pedido);
         await queryRunner.commitTransaction();
 
+        // Emails fora da transação
         await this.enviarEmailCancelamento(pedido);
       }
 
@@ -250,6 +265,7 @@ export class PedidoService {
     await queryRunner.startTransaction();
 
     try {
+        // 1. Busca o pedido para garantir o ID de pagamento
         const pedido = await queryRunner.manager.findOne(Pedido, {
             where: { id: pedidoId },
             relations: ['pagamento'],
@@ -263,18 +279,22 @@ export class PedidoService {
             throw new BadRequestException('ID de Pagamento não corresponde ao ID do Pedido.');
         }
 
+        // 2. CRIA/ATUALIZA o pagamento detalhado
+        // Este método deve ser criado no PagamentoService (veja abaixo)
         const novoPagamentoDetalhado = await this.pagamentoService.processarAtualizacaoDetalhes(
             dto.pagamentoId,
             dto.metodo,
             dto.detalhes,
-            queryRunner
+            queryRunner // Passa o QueryRunner para garantir a transação
         );
 
-
+        // 3. Atualiza o pedido (se o método mudou) e salva
         if (pedido.pagamento.metodo !== dto.metodo) {
             pedido.pagamento.metodo = dto.metodo;
             pedido.dataModificacao = new Date();
-
+            
+            // O `processarAtualizacaoDetalhes` já deve ter salvo o Pagamento base.
+            // Aqui, apenas salvamos o Pedido se houve mudança no método ou data.
             await queryRunner.manager.save(pedido);
         }
 
@@ -358,6 +378,7 @@ export class PedidoService {
     const dataPedido = agoraRecife.format('DD/MM/YYYY');
     const horaPedido = agoraRecife.format('HH:mm:ss');
 
+    // Formata os itens
     const itensFormatados =
       pedido.itens?.map((item) => ({
         nome: item.produto?.nome || 'Produto',
