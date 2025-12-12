@@ -39,7 +39,7 @@ Este é um projeto de e-commerce com **backend em NestJs**.
 
     #frete
     MELHOR_ENVIO_TOKEN=    #token da plataforma melhor envio
-    CEP_ORIGEM=          #cep da origem do frete para o cep do cadastro do cliente
+    CEP_ORIGEM=54080000   #(bulhôes),cep da origem do frete para o cep do cadastro do cliente
 
     ```
 3. **Instale as dependências  do projeto**

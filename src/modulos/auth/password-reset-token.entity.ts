@@ -4,7 +4,6 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
-  BeforeInsert
 } from 'typeorm';
 import { Cliente } from '../cliente/cliente.entity';
 

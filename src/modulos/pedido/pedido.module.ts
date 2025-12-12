@@ -10,9 +10,7 @@ import { Endereco } from '../endereco/endereco.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { VerificaPedidosExpirados } from './verifica-pedido';
 import { ConfigModule } from '@nestjs/config';
-import { Pagamento } from '../pagamento/pagamento.entity';
 import { PagamentoModule } from '../pagamento/pagamento.module';
-
 
 
 @Module({

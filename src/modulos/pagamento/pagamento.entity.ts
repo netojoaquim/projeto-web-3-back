@@ -7,6 +7,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Pedido } from '../pedido/pedido.entity';
+import { PagamentoCartao } from './pagamento.cartao.entity';
+import { PagamentoPix } from './pagamento.pix.entity';
+import { PagamentoBoleto } from './pagamento.boleto.entity';
 
 export enum PagamentoStatus {
   PENDENTE = 'PENDENTE',
@@ -49,4 +52,19 @@ export class Pagamento {
 
   @OneToOne(() => Pedido, (pedido) => pedido.pagamento, { onDelete: 'CASCADE' })
   pedido: Pedido;
+
+  @OneToOne(() => PagamentoCartao, (detalhe) => detalhe.pagamento, {
+    cascade: true,
+  })
+  pagamentoCartao: PagamentoCartao;
+
+  @OneToOne(() => PagamentoPix, (detalhe) => detalhe.pagamento, {
+    cascade: true,
+  })
+  pagamentoPix: PagamentoPix;
+
+  @OneToOne(() => PagamentoBoleto, (detalhe) => detalhe.pagamento, {
+    cascade: true,
+  })
+  pagamentoBoleto: PagamentoBoleto;
 }

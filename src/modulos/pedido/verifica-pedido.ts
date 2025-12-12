@@ -62,13 +62,6 @@ export class VerificaPedidosExpirados  {
 
   private async liberarEstoqueECancelarPedido(pedido: Pedido): Promise<void> {
     try {
-
-      if (pedido.pagamento?.id) {
-        await this.pagamentoService.atualizarPagamento(
-          pedido.pagamento.id,
-          PagamentoStatus.CANCELADO,
-        );
-      }
       await this.pedidoService.atualizarStatus(pedido.id,{
         status: PedidoStatus.CANCELADO,
         motivo_cancelamento: 'Pagamento não finalizado (cancelamento automático)',

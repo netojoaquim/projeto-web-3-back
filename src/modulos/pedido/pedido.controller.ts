@@ -1,19 +1,11 @@
-import {
-  Controller,
-  Post,
-  Param,
-  Body,
-  Patch,
-  Get,
-  ParseIntPipe,
-  UseGuards
-} from '@nestjs/common';
+import {Controller,Post,Param,Body,Patch,Get,ParseIntPipe,UseGuards}from '@nestjs/common';
 import { PedidoService } from './pedido.service';
 import { PedidoStatus } from './pedido.entity';
 import { UpdateStatusDto } from './dto/update-status-pedido.dto';
 import { ApiOperation,ApiTags,ApiBearerAuth } from '@nestjs/swagger';
 import { CreatePedidoDto } from './dto/create-pedido.dto';
 import { JwtAuthGuard } from 'src/modulos/auth/jwt-auth.guard';
+import { UpdatePagamentoDto } from '../pagamento/UpdatePagamentoDto';
 
 
 @ApiTags('Pedidos')
@@ -43,6 +35,14 @@ export class PedidoController {
     @Body() updateStatusDto: UpdateStatusDto,
   ) {
     return await this.pedidoService.atualizarStatus(id,updateStatusDto);
+  }
+
+  @Patch(':id/pagamento')
+  async atualizarPagamento(
+    @Param('id') pedidoId: number,
+    @Body() updatePagamentoDto: UpdatePagamentoDto,
+  ) {
+    return this.pedidoService.atualizarPagamento(pedidoId, updatePagamentoDto);
   }
 
   @ApiBearerAuth()

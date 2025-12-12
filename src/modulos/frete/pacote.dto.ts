@@ -12,7 +12,6 @@ export class PacoteDto {
 
   @ApiProperty({ example: 0.3 })
   weight: number;
-  
   @ApiProperty({ example: 100.0 })
   insurance_value: number;
 }
