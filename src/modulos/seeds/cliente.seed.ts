@@ -38,7 +38,7 @@ export class ClienteSeed {
         ativo: true,
       },
     ];
-
-    await this.repo.save(cliente);
+    const entities=this.repo.create(cliente);
+    await this.repo.save(entities);
   }
 }
